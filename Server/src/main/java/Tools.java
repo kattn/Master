@@ -3,14 +3,13 @@ import com.google.gson.*;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+
 
 public class Tools {
 
     public static ArrayList<FeatureCollection> parseGeoJSON(String path) {
         GsonBuilder builder = new GsonBuilder();
-        Gson gson = builder.create();
+        Gson gson = builder.registerTypeAdapter(Feature.class, new FeatureTypeAdapter()).create();
 
         ArrayList<FeatureCollection> featureObjects = new ArrayList<>();
         try {
@@ -25,7 +24,6 @@ public class Tools {
                     throw e;
                 }
             }
-            System.out.println(featureObjects.get(0).features.toArray()[0]);
         } catch (FileNotFoundException e) {
             System.out.println(e);
         }

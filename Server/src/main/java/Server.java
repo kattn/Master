@@ -1,35 +1,73 @@
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.Scanner;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.java_websocket.WebSocket;
+import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.server.WebSocketServer;
 
-public class Server{
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
-    private static int defaultPort = 8080;
+
+public class Server extends WebSocketServer {
+
+    public Server(InetSocketAddress address) {
+        super(address);
+    }
+
+    @Override
+    public void onOpen(WebSocket conn, ClientHandshake handshake) {
+        System.out.println("Client connected");
+    }
+
+    @Override
+    public void onClose(WebSocket conn, int code, String reason, boolean remote) {
+        if(remote){
+            System.out.println("Client disconnected");
+        }
+    }
+
+    @Override
+    public void onMessage(WebSocket conn, String messageString) {
+        GsonBuilder builder = new GsonBuilder();
+        Gson gson = builder.registerTypeAdapter(Message.class, new MessageTypeAdapter()).create();
+        Message message = gson.fromJson(messageString, Message.class);
+
+        if (message.getCommand() == Command.REQUEST_FEATURES) {
+            ArrayList<FeatureCollection> featureCollections =  Tools.parseGeoJSON("../va.json");
+
+            Message response = new Message();
+            response.setCommand(Command.REPSONSE_FEATURES);
+            response.setContent(gson.toJson(featureCollections));
+
+            conn.send(gson.toJson(response));
+        }
+    }
+
+    @Override
+    public void onMessage(WebSocket conn, ByteBuffer message) {
+
+    }
+
+    @Override
+    public void onError(WebSocket conn, Exception ex) {
+        System.out.println("Error encountered from " + conn.getRemoteSocketAddress() + ":");
+        System.out.println(ex);
+        ex.printStackTrace();
+        conn.closeConnection(0, "error encountered");
+    }
+
+    @Override
+    public void onStart() {
+        System.out.println("Server started successfully");
+    }
 
     public static void main(String[] args){
-        try {
-            GeoJSONParser.parseGeoJSON("../va.json");
+        String host = "localhost";
+        int port = 8080;
 
-            ServerSocket server = new ServerSocket(Server.defaultPort);
-
-            System.out.println("Server has started on 127.0.0.1:" + Server.defaultPort + ".\r\nWaiting for a connection...");
-
-            Socket client = server.accept();
-
-            System.out.println("A client connected.");
-
-            InputStream in = client.getInputStream();
-
-            OutputStream out = client.getOutputStream();
-
-            String data = new Scanner(in, "UTF-8").useDelimiter("\\r\\n\\r\\n").next();
-
-
-        } catch (IOException e) {
-            System.out.print(e);
-        }
+        WebSocketServer server = new Server(new InetSocketAddress(host, port));
+        System.out.println(server.getAddress().toString());
+        server.run();
     }
 }

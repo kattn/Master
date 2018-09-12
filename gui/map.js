@@ -6,17 +6,75 @@ var map = new mapboxgl.Map({
     zoom: 12 // starting zoom
 });
 
-loadPrincepality();
+var WebSocket = WebSocket;
+var connection = null;
+var connected = false;
+var features = null;
+
+connect();
 
 function loadPrincepality() {
-    var xojb = new XMLHttpRequest();
-    xojb.overrideMimeType("application/json");
-    xojb.open('GET', "http://127.0.0.1:8080", true);
-    xojb.onreadystatechange = function (ev) {
-        if (xojb.readyState === 4 && xojb.status === "200") {
-                var json = JSON.parse(xojb.responseText);
-                console.log(json);
-        }
-    };
-    xojb.send(null);
+    connection.send(JSON.stringify({
+        "command" : "REQUEST_FEATURE",
+        "content" : ""
+    }));
+}
+
+function connect() {
+    var serverUrl = "ws://127.0.0.1:8080";
+
+    connection = new WebSocket(serverUrl);
+
+    connection.onopen = function(ev) {
+        connected = true;
+        loadPrincepality();
+    }
+
+    connection.onclose = function(ev) {
+        connected = false;
+    }
+
+    connection.onmessage = function(ev) {
+        features = JSON.parse(ev.data).content;
+        console.log(features);
+
+        map.addLayer({
+            "id": features[0].name,
+            "type": "circle",
+            "source": {
+                "type": "geojson",
+                "data": features[0]
+            },
+            "paint": {
+                "circle-radius": 3,
+                "circle-color": "#007cbf"
+            }
+        });
+
+        map.addLayer({
+            "id": features[1].name,
+            "type": "circle",
+            "source": {
+                "type": "geojson",
+                "data": features[1]
+            },
+            "paint": {
+                "circle-radius": 3,
+                "circle-color": "#007cbf"
+            }
+        });
+
+        map.addLayer({
+            "id": features[2].name,
+            "type": "line",
+            "source": {
+                "type": "geojson",
+                "data": features[2]
+            },
+            "paint": {
+                "line-width": 3,
+                "line-color": "#007cbf"
+            }
+        });
+    }
 }
