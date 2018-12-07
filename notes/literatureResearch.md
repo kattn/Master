@@ -80,3 +80,188 @@ url: https://ieeexplore.ieee.org/document/4426957/
 - The BP NN obtains attribute weights, CBR classifies
 - Studies different parameters to test performance
 - Got better results using the hybrid method then CBR alone
+
+### Incremental dictionary learning for fault detection with applications to oil pipeline leakage detection
+url: https://ieeexplore.ieee.org/document/6047960/
+- Explains and references the negative pressure wave(NPW) method, when a leak happens the preassure drops and this can be used to identify where the leak happend.
+- During testing the purposed method had 2 correct detectoins and no false alarms.
+
+### Pipeline leakage monitor system based on Virtual Instrument
+url: https://ieeexplore.ieee.org/document/5246155/
+- More details on NPW method on leakage detection
+
+### A combined kalman filter — Discrete wavelet transform method for leakage detection of crude oil pipelines
+url: https://ieeexplore.ieee.org/document/5274381/
+- using kalman filters
+
+
+#### New lit res:
+
+### Using Correlation between Data from Multiple Monitoring Sensors to Detect Bursts in Water Distribution Systems
+url: https://ascelibrary.org/doi/pdf/10.1061/%28ASCE%29WR.1943-5452.0000870
+citations: 
+
+## Context:
+- Current and good root for further research
+
+## Goal/Motivation:
+- Data-driven burst detection methods uses a prediction and a classification stage. This paper proposes a clustering method that only uses data over a smaller time window(i.e. 12 hours).
+
+## Related work:
+[0]: Rodrigues and Laio(2014), similarity measures local density and distance to vectors with higher densities
+[1]: Colombo et al. 2009, summary of transient-based applications
+[2]: Romano et al. 2014a, ANN approach
+[3]: Sanz et al. 2016, Wu et al. 2010, model-based approach
+
+## Methodology:
+- Data-driven method
+
+## Summary:
+- Represents flow and preassure data from each inlet/outlet to the DMA(district metering area) as vectors, normalized by the median of the current detection window. One vector per timestep.
+- Then checks correlation between each vector using Cosine Distance, and two quantities defined by [0].
+- "An abnormal flow vector is defined characterized by a relatively large distance and the lowest local density." Distence is quantified by a significance factor alpha.
+- The initial history matrix(matrix of data-vectors) was "cleaned" by removing outlier vectors with a significance factor alpha_1. Alpha_2 was used for future outlying vectors
+- Has a table of reasons for changes in vectors and corresponding change conditions
+- Resulted in 0.40% False Positive Rate(FPR) and 71.43% true positive rate(TPR)
+- Method removes wather impact on burst detection
+- Method is good on small data sets, vs bigger data sets required by other data-driven methods
+- Parameters alpha_1, alpha_2 and size of the detection window decieds the results(FPR/TPR) of the method.
+- Has two undetectable outliers
+
+## Evaluation/Master ideas:
+- Good and well referenced introduction to burst dection, use to find state of the art and related work, refrences other data-driven methods aswell
+- Other similarity measures
+- Expand and classify individual reasons for changes in vectors, can also be used for explanation
+- My data is over more DMA's(hopefully)
+- Detect the undetected outliers
+- Paper removes weather impact, maybe it should be added?
+- Find better standard answer then zero on faulty/missing sensor data
+- Does not use burst location(combo wombo?)
+- "The data of several pressure sensors within a DMA also shows strong temporal varying correlation", no backup of this other then a graph, also does not test independent DMA's
+- Checking transferability in both a bigger system and also between independent DMA's
+- Instead of this method, use a RNN with the same windows to solve the problem, should there be a reason behind introducting a new approach?
+
+
+
+### Distance-Based Burst Detection Using Multiple Pressure Sensors in District Metering Areas
+url: https://ascelibrary.org/doi/pdf/10.1061/%28ASCE%29WR.1943-5452.0001001
+
+## Context:
+- Uses a data-driven approach to point out the closest pressure sensor to the burst
+
+## Goal/Motivation:
+1. Utilize correlation between pressure sensors
+2. Detect burst using the correlation
+3. Provide approximate location information of the burst(identify the closest pressure sensor)
+
+## Related work:
+[0]: Wu et al (2018), using cosine distance to utilize the correlation between pressure measurements
+[1]: Knorr and Ng (1998), distance-based(DB) algorithm used for detecting bursts
+[2]: Pudgar and Ligett (1992), abnormality degree(AD) to identify the closest pressure sensor
+
+## Methodology:
+- Data-driven, pressure data in 5 min intervals
+- Implements cosine distance and AD into the DB-algorithm
+
+## Summary:
+- Comes with a new data-driven method focusing on several sensors instead of a single one, and adds some localization information
+- Burst: event causing flow rate increase of >40% of average DMA inflow
+- Classifies 3 feature changes:
+    1. Data from inlet pressure sensor change only slightly
+    2. "The temporal varying correlation between the inlet pressure sensor and other sensors disappears during bursts"
+    3. The closest pressure sensor has the most significant pressure drop
+- Data is represented as (n-1) data streams, where n is the number of pressure sensors, each stream is a 2-d vector containg the inlet pressure messure and the i'th sensor value
+- The DB-algorithm is used on the vectors within a sliding window in each datastream. Vectors with few neighbors are prone to be outliners, distance measured using cosine distance
+    - DB can be optimized by 3 variables, p, q and l(size of the sliding window)
+- Abnormality degree is introduced to be 1-(k/N) if k < N or 0 otherwise. k is the number of neighbors to the vector. => if a vector has few or no neighbours it is an outlier
+- One time slice is indentified as an instance, if any outlier is identified in an instance, it is an abnormal instance
+- Testing shows that p and q are the variables that impact the FPR and TPR, while l has no effect when it is choosen sufficiently large(such that the window cover several days)
+- With p=0.19 and q=0.47 => FPR = 1.6%, but the TPR < 100%. Here all events where identified, but not all 50 instances that corresponded with the events.
+- 270 instances where classified as FP, 62 because of missing data, the system identifies 2 or more concecutive abnormal instances as reason for alarm, resulting in 15 false alarms.
+    - 3 related to unknown events that caused fluctuating flow and pressure
+    - 12 where water usaged during demanding hours, i.e. customer demand caused abrupt increase in water usage.
+
+
+## Evaluation/Master ideas:
+- Find a better solution for missing data then setting sensor to 0
+    - dynamic? If no data, just ignore the sensor?
+- Paper suggests:
+    - Optimizing p and q, suggests genetic algorithm
+    - Identifying minimum detectavle burst size
+    - Reduce FP connected with customer demand(seen as normal behavior)
+    - More precise burst location using the network topology
+
+### Guidelines for Snowballing in Systematic Literature Studies and a Replication in Software Engineering
+url: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.709.9164&rep=rep1&type=pdf
+
+## Context:
+- Get a thourogh understanding of snowballing and how to present how it was done, and how to actually do it
+
+## Goal/Motivation:
+- Literature review using a snowballing approach
+1. "Formulate a systematic snowballing procedure for systematic lterature studies in software engineering"
+2. "Illusrate and evaluate the snowballing procedure by replicating a published systematic lit. review"
+
+## Related work:
+[0] Skoglund and Runeson[16], reference-based research focused on reducing inital papers, not satisfactory results
+[1] MacDonell et al. [11], stavle snowballing procedure
+
+## Methodology:
+- Replicates a lit. res. using snowballing and compares the results of two lit. res. 
+
+## Summary:
+- Needs a systematic approach to build individual knowledge and combine knowledge from diff. sources
+- Backward snowballing, evaluate the refrence list
+- Forward snowballing, evaluate where the paper is cited
+- Process:
+    1. Identify start set and include them:
+        - Only papers that are going to be used(not candidates for the start set)
+        - Avoid bias that favors authors or publishers
+        - Independent papers
+        - Big enough start set
+        - Diverse
+        - Also look for relevant papers using synonyms
+    2. Iterate:
+        - For each included paper do one backward snowball phase
+        - For each included paper do one forward snowball phase
+        - Tips: View in which context the paper is cited/refrenced
+        - Before a paper is included read abstract -> skim paper
+        - NB: Never go to the next paper before you are finished with the current
+        - Keep the papers iteration specific
+        - Contact authors, look at journals/confrences for more papers
+- Use google scholar to avoid pulisher bias
+- Efficiency tracked using #candidates/#included
+- 10 lessons learned:
+    - Easy excludsion of papers
+    - Avoid clusters and biases
+    - Difficulty of exclusion vs evaluating more
+    - Inlcude/Exclude may be transitive through context
+    - Frequency of inclusion of papers should be tracks per iter
+    - If there are no drop in frequency, it indicates a undiscovered cluster
+    - Citation matrix are usefull, matrix where citation/refrencing of papers are tracked, also if it was possible to cite/refer based on the timeline
+
+
+## Evaluation/Master ideas:
+- Same people did the two lit. res. that are compared
+
+
+### Optimal meter placement for pipe burst detection in water distribution systems 
+url: https://iwaponline.com/jh/article/18/4/741/30092/Optimal-meter-placement-for-pipe-burst-detection?searchresult=1
+
+## Why to read:
+- Get understanding of where meters should be placed, maybe applicable to location?
+- Also mentions what flow/pressure meters can detect
+
+
+### Burst detection and location in water distribution networks 
+url: https://iwaponline.com/ws/article/5/3-4/71/26096/Burst-detection-and-location-in-water-distribution?searchresult=1
+
+## Why to read:
+- An algorithm for the detection and location of sudden bursts in water distribution networks combining both continuous monitoring of pressure and hydraulic transient computation is presented
+
+
+### Risk-based sensor placement methods for burst/leak detection in water distribution systems 
+url: https://iwaponline.com/ws/article/17/6/1663/38191/Risk-based-sensor-placement-methods-for-burst-leak?searchresult=1
+
+## Why to read:
+- The optimal placement of sensors for burst/leak detection in water distribution systems is usually formulated as an optimisation problem. In this study three different risk-based functions are used to drive optimal location of a given number of sensors in a water distribution network. A simple function based on likelihood of leak non-detection is compared with two other risk-based functions, where impact and exposure are combined with the leak detection likelihood
