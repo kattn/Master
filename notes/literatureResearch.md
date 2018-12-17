@@ -244,20 +244,16 @@ url: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.709.9164&rep=rep1&
 ## Evaluation/Master ideas:
 - Same people did the two lit. res. that are compared
 
-
-### Optimal meter placement for pipe burst detection in water distribution systems 
-url: https://iwaponline.com/jh/article/18/4/741/30092/Optimal-meter-placement-for-pipe-burst-detection?searchresult=1
-
-## Why to read:
-- Get understanding of where meters should be placed, maybe applicable to location?
-- Also mentions what flow/pressure meters can detect
-
-
-### Burst detection and location in water distribution networks 
-url: https://iwaponline.com/ws/article/5/3-4/71/26096/Burst-detection-and-location-in-water-distribution?searchresult=1
+### LeakDB: A benchmark dataset for leakage diagnosis in waterdistribution networks 
+url: https://ojs.library.queensu.ca/index.php/wdsa-ccw/article/view/12315/7911
 
 ## Why to read:
-- An algorithm for the detection and location of sudden bursts in water distribution networks combining both continuous monitoring of pressure and hydraulic transient computation is presented
+- Benchmarking and datasets
+
+### Model-based leak detection and location in water distribution networks considering an extended-horizon analysis of pressure sensitivities
+url: https://iwaponline.com/jh/article/16/3/649/3082/Model-based-leak-detection-and-location-in-water?searchresult=1
+## Why to read:
+- Bunch of current leak detection aglorithms, no AI involved
 
 
 ### Risk-based sensor placement methods for burst/leak detection in water distribution systems 
@@ -265,3 +261,17 @@ url: https://iwaponline.com/ws/article/17/6/1663/38191/Risk-based-sensor-placeme
 
 ## Why to read:
 - The optimal placement of sensors for burst/leak detection in water distribution systems is usually formulated as an optimisation problem. In this study three different risk-based functions are used to drive optimal location of a given number of sensors in a water distribution network. A simple function based on likelihood of leak non-detection is compared with two other risk-based functions, where impact and exposure are combined with the leak detection likelihood
+
+### Short-term water demand forecasting using machine-learning
+url: https://iwaponline.com/jh/article-abstract/20/6/1343/63662/Short-term-water-demand-forecasting-using-machine?redirectedFrom=fulltext
+
+## Why to read:
+- Might shed some light on how to apply ML on water data
+
+
+### Artificial neural networks: applications in the drinking water sector
+url: https://watermark.silverchair.com/ws018061869.pdf?token=AQECAHi208BE49Ooan9kkhW_Ercy7Dm3ZL_9Cf3qfKAc485ysgAAAgYwggICBgkqhkiG9w0BBwagggHzMIIB7wIBADCCAegGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMPX_JlvQXYjg55dvAAgEQgIIBue-9EWIDM2O6mlD1Ls9GOOFsbUGpx7c86BkgDWAIz6AqO0DZDlEYR7VbnjZNhRgsDVdIoBSlval-J8bazR2kT677DI7ACQG0a75NnOSG0T6fr3Z64RYPC_mRcqyZa_YPCnBrxkqVELqbhuOpjYhudh3SI_MiL0DIOIQtaT-K8VHiLxv8gnJxo__ixb_aGwex9j_Q8yN3ytP75PIXX5980LE5hi6Cl8q3pnKpxDprZJ9w0qrFVV-yfKPYafMUD-SbyPHSlZJZHl5EOdc3xGElb2XhT8Z3yXgM6re0V2w10Uh67mXDNKicQleaXikO6w0mM6qPaKEqHFIOEkZmIvkZFwubj-e1VcsAUchi_lhvudBK_hVtz-fuD469-ar4SsHNCJUPMkbEtMDVX4RNT8CJ_jSybAt5-rzMUEIZBQb4X8RcN0DxPqQTpB-K3tnTg_EiEDRdidJp-uJqhTg2XBscaCxkf7jM8zDV4Fg1Xsm7lvOzl3JcFIOfXaS32C1SyNOW-Xn_Aq2WY-ItUnMpgSofAc5_BZzO5IQ4hhdXy1wOD8hioXcmYtGzZGD4LJ1fBG5fl2KIavjJJ0pZrw
+
+
+### Multivariate Principal Component Analysis and Case-Based Reasoning for monitoring, fault detection and diagnosis in a WWTP(WasteWaterTreatmentPlant)
+url: https://iwaponline.com/wst/article/64/8/1661/31553/Multivariate-Principal-Component-Analysis-and-Case?searchresult=1   
