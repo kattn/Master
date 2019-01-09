@@ -273,5 +273,41 @@ url: https://iwaponline.com/jh/article-abstract/20/6/1343/63662/Short-term-water
 url: https://watermark.silverchair.com/ws018061869.pdf?token=AQECAHi208BE49Ooan9kkhW_Ercy7Dm3ZL_9Cf3qfKAc485ysgAAAgYwggICBgkqhkiG9w0BBwagggHzMIIB7wIBADCCAegGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMPX_JlvQXYjg55dvAAgEQgIIBue-9EWIDM2O6mlD1Ls9GOOFsbUGpx7c86BkgDWAIz6AqO0DZDlEYR7VbnjZNhRgsDVdIoBSlval-J8bazR2kT677DI7ACQG0a75NnOSG0T6fr3Z64RYPC_mRcqyZa_YPCnBrxkqVELqbhuOpjYhudh3SI_MiL0DIOIQtaT-K8VHiLxv8gnJxo__ixb_aGwex9j_Q8yN3ytP75PIXX5980LE5hi6Cl8q3pnKpxDprZJ9w0qrFVV-yfKPYafMUD-SbyPHSlZJZHl5EOdc3xGElb2XhT8Z3yXgM6re0V2w10Uh67mXDNKicQleaXikO6w0mM6qPaKEqHFIOEkZmIvkZFwubj-e1VcsAUchi_lhvudBK_hVtz-fuD469-ar4SsHNCJUPMkbEtMDVX4RNT8CJ_jSybAt5-rzMUEIZBQb4X8RcN0DxPqQTpB-K3tnTg_EiEDRdidJp-uJqhTg2XBscaCxkf7jM8zDV4Fg1Xsm7lvOzl3JcFIOfXaS32C1SyNOW-Xn_Aq2WY-ItUnMpgSofAc5_BZzO5IQ4hhdXy1wOD8hioXcmYtGzZGD4LJ1fBG5fl2KIavjJJ0pZrw
 
 
+#### Snowballing
+
 ### Multivariate Principal Component Analysis and Case-Based Reasoning for monitoring, fault detection and diagnosis in a WWTP(WasteWaterTreatmentPlant)
 url: https://iwaponline.com/wst/article/64/8/1661/31553/Multivariate-Principal-Component-Analysis-and-Case?searchresult=1   
+
+
+### Multi-Leak Detection with Wavelet Analysis in Water Distribution Networks
+url: https://ieeexplore.ieee.org/document/6265794
+
+## Context:
+- Leak detection and localization using sensitivity matrix and wavelet analysis, joined with a voting system to identify multiple leaks.
+
+## Goal/Motivation:
+1. Multiple leak detection and localizations
+
+## Related work:
+[0] Ragot: https://ieeexplore.ieee.org/document/6265794, detectes faults in measurements using fuzzy analysis, mentions 25% loss of purified water, but reference goes nowhere.
+[1] Mashford: https://ieeexplore.ieee.org/document/5319304, location and size of leaks using SVMs, good list of practicle detection methods
+[2] Covas: https://www.civil.ist.utl.pt/~hr/BHR01-03-28_DC-HR_.pdf, leakage detection and location using transitory inverse analysis
+[3] Perez: https://www.sciencedirect.com/science/article/pii/S0967066111001201, Model-based leakage location
+[4] Casillas: https://ieeexplore.ieee.org/abstract/document/6669568, Model-based leakage detection
+
+## Methodology:
+- Model-based
+- Uses sensitivity matrices and wavelet analysis to generate a comparision matrix, that is then used with a voting system to localize the leaks
+
+## Summary:
+- Focuses on multiple leak detection, instead of the standard single leak detection
+
+
+## Evaluation/Master ideas:
+- Find a better solution for missing data then setting sensor to 0
+    - dynamic? If no data, just ignore the sensor?
+- Paper suggests:
+    - Optimizing p and q, suggests genetic algorithm
+    - Identifying minimum detectavle burst size
+    - Reduce FP connected with customer demand(seen as normal behavior)
+    - More precise burst location using the network topology

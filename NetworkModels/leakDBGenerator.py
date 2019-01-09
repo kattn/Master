@@ -10,23 +10,26 @@ import shutil
 import pandas
 import time
 #import sys
+import matplotlib.pylab as plt
 
-benchmark = os.getcwd()[:-17]+'Benchmarks\\'
-#try:
-#    os.makedirs(benchmark)
-#except:
-#    pass 
+benchmark = os.getcwd()+'/Benchmarks/'
+try:
+   os.makedirs(benchmark)
+except:
+   pass 
 
 # demand-driven (DD) or pressure dependent demand (PDD) 
 Mode_Simulation = 'PDD'#'PDD'
 
 # Leak types
 leak_time_profile = ["abrupt", "incipient"]
-sim_step_minutes = 30
+sim_step_minutes = 15
 
-# Set duration in hours
-durationHours = 24*365 # One Year
-timeStamp = pandas.date_range("2017-01-01 00:00", "2017-12-31 23:55", freq=str(sim_step_minutes)+"min")
+
+# Set duration
+num_days = 150
+durationHours = 24*num_days
+timeStamp = pandas.date_range("2017-01-01 00:00", periods=durationHours*(60/sim_step_minutes), freq=str(sim_step_minutes)+"min")
 
 #timeStamp = pandas.date_range("2017-12-01 00:00", "2017-12-30 23:55", freq="24h")
 #timeStamp = pandas.date_range("00:00", "23:55", freq="5min")
@@ -60,7 +63,7 @@ def runScenarios(scNum):
             if os.path.exists(netName):
                 shutil.rmtree(netName)
             os.makedirs(netName)
-            shutil.copyfile(inp_file, netName+'\\'+os.path.basename(wn.name))
+            shutil.copyfile(inp_file, netName+'/'+os.path.basename(wn.name))
         except:
             pass 
     
@@ -100,7 +103,7 @@ def runScenarios(scNum):
     
     # CREATE FOLDER EVERY SCENARIO-I
     labels = np.zeros(len(timeStamp))#.astype(int)
-    Sc = netName+'\\Scenario-'+str(scNum)
+    Sc = netName+'/Scenario-'+str(scNum)
     if os.path.exists(Sc):
         shutil.rmtree(Sc)
     os.makedirs(Sc)
@@ -112,20 +115,23 @@ def runScenarios(scNum):
     #if "ky" in INP:
     wn._patterns= {}
     # tempbase_demand = wn.query_node_attribute('base_demand')
-    # tempbase_demand = np.array([tempbase_demand[line] for line in tempbase_demand])
+    tempbase_demand = wn.query_node_attribute('demand_timeseries_list')
+    tempbase_demand = np.array([tempbase_demand[line].base_demand_list()[0] for line in tempbase_demand])
     # tmp = map(lambda x: x * uncertainty_base_demand, tempbase_demand)
-    # ql=tempbase_demand-tmp
-    # qu=tempbase_demand+tmp
-    # mtempbase_demand=len(tempbase_demand)
-    # qext_mtempbase_demand=ql+np.random.rand(mtempbase_demand)*(qu-ql)
+    tmp = tempbase_demand * uncertainty_base_demand
+    ql=tempbase_demand-tmp
+    qu=tempbase_demand+tmp
+    mtempbase_demand=len(tempbase_demand)
+    qext_mtempbase_demand=ql+np.random.rand(mtempbase_demand)*(qu-ql)
     
     for w, junction in enumerate(wn.junction_name_list):
-        # print(wn.get_node(junction).base_demand)
         # wn.get_node(junction).base_demand = qext_mtempbase_demand[w] #wn.query_node_attribute('base_demand')
         pattern_name = 'P_'+junction
         patts = genDem()
+        wn.get_node(junction).demand_timeseries_list.clear()
+        wn.get_node(junction).demand_timeseries_list.append((qext_mtempbase_demand[w], pattern_name))
         wn.add_pattern(pattern_name, patts)
-        wn.get_node(junction).demand_pattern_name = pattern_name
+        # wn.get_node(junction).demand_pattern_name = pattern_name
     
     ###########################################################################
     ## SET UNCERTAINTY PARAMETER
@@ -249,12 +255,11 @@ def runScenarios(scNum):
         
     ## SAVE EPANET INPUT FILE 
     # Write inp file
-    wn.write_inpfile(Sc+'\\'+inp+'_Scenario-'+str(scNum)+'.inp')
+    wn.write_inpfile(Sc+'/'+inp+'_Scenario-'+str(scNum)+'.inp')
     
     ## RUN SIMULATION WITH WNTR SIMULATOR
     sim = wntr.sim.WNTRSimulator(wn, mode=Mode_Simulation)
     results = sim.run_sim()
-    print("results node pressure item\n", results.node['pressure'])
     # if ((all(results.node['pressure',:,:]> 0)) !=True)==True:
     if ((all(results.node['pressure']> 0)) !=True)==True:
         print("not run")
@@ -275,18 +280,18 @@ def runScenarios(scNum):
     
     if results:
         ## CREATE FOLDERS FOR SCENARIOS
-        pressures_Folder = Sc+'\\Pressures'
+        pressures_Folder = Sc+'/Pressures'
         createFolder(pressures_Folder)
-        dem_Folder = Sc+'\\Demands'
+        dem_Folder = Sc+'/Demands'
         createFolder(dem_Folder)
-        flows_Folder = Sc+'\\Flows'
+        flows_Folder = Sc+'/Flows'
         createFolder(flows_Folder)
-        leaks_Folder = Sc+'\\Leaks'
+        leaks_Folder = Sc+'/Leaks'
         createFolder(leaks_Folder)
      
         ## CREATE CSV FILES     
         for leak_i in range(nmLeaksNode):
-            fleaks2 = open(leaks_Folder+'\\Leak_'+str(leak_node[leak_i])+'_info.csv', 'w')
+            fleaks2 = open(leaks_Folder+'/Leak_'+str(leak_node[leak_i])+'_info.csv', 'w')
             fleaks2.write("{} , {}\n".format('Description', 'Value'))
             fleaks2.write("{} , {}\n".format('Leak Node', str(leak_node[leak_i])))
             fleaks2.write("{} , {}\n".format('Leak Area', str(leak_area[leak_i])))
@@ -299,13 +304,13 @@ def runScenarios(scNum):
             
             # Leaks CSV
             # leaks = results.node['leak_demand',:,str(leak_node[leak_i])][0:-1]
-            leaks = results.node['leak_demand'][:,str(leak_node[leak_i])][0:-1]
+            leaks = results.node['leak_demand'][str(leak_node[leak_i])][0:-1]
             leaks = [ round(elem, 3) *3600  for elem in leaks ]    
             fleaks = pandas.DataFrame(leaks)
             fleaks['Timestamp'] = timeStamp
             fleaks = fleaks.set_index(['Timestamp'])
             fleaks.columns.values[0]='Description'
-            fleaks.to_csv(leaks_Folder+'\\Leak_'+str(leak_node[leak_i])+'_demand.csv')
+            fleaks.to_csv(leaks_Folder+'/Leak_'+str(leak_node[leak_i])+'_demand.csv')
             del fleaks
         
         # Labels scenarios
@@ -313,13 +318,13 @@ def runScenarios(scNum):
         flabels['Timestamp'] = timeStamp
         flabels = flabels.set_index(['Timestamp'])
         flabels.columns.values[0]='Label'
-        flabels.to_csv(Sc+'\\Labels.csv')
+        flabels.to_csv(Sc+'/Labels.csv')
         del flabels
         
         for j in range(0, wn.num_nodes):
     
             # pres = results.node['pressure',:,wn.node_name_list[j]][0:-1]
-            pres = results.node['pressure'][:,wn.node_name_list[j]][0:-1]
+            pres = results.node['pressure'][wn.node_name_list[j]][0:-1]
             pres = [ round(elem, 3) for elem in pres ]
             if ((all(results.node['pressure']> 0)) !=True)==True:
                 print('Negative Pressures')
@@ -327,35 +332,36 @@ def runScenarios(scNum):
             fpres['Timestamp'] = timeStamp
             fpres = fpres.set_index(['Timestamp'])
             fpres.columns.values[0]='Value'
-            file_pres = pressures_Folder+'\\Node_'+str(wn.node_name_list[j])+'.csv'
+            file_pres = pressures_Folder+'/Node_'+str(wn.node_name_list[j])+'.csv'
             fpres.to_csv(file_pres)            
             del fpres, pres
             
             # dem = results.node['demand',:,wn.node_name_list[j]][0:-1]
-            dem = results.node['demand'][:,wn.node_name_list[j]][0:-1]
+            dem = results.node['demand'][wn.node_name_list[j]][0:-1]
             dem = [ round(elem, 3) * 3600 for elem in dem ] 
             fdem = pandas.DataFrame(dem)
             fdem['Timestamp'] = timeStamp
             fdem = fdem.set_index(['Timestamp'])
             fdem.columns.values[0]='Value'
-            fdem.to_csv(dem_Folder+'\\Node_'+str(wn.node_name_list[j])+'.csv')
+            fdem.to_csv(dem_Folder+'/Node_'+str(wn.node_name_list[j])+'.csv')
             del fdem, dem
             
         for j in range(0, wn.num_links):
-            flows = results.link['flowrate',:,wn.link_name_list[j]][0:-1]
+            flows = results.link['flowrate'][wn.link_name_list[j]][0:-1]
+            flows = results.link['flowrate'][wn.link_name_list[j]][0:-1]
             flows = [ round(elem, 3) * 3600 for elem in flows ]
             fflows = pandas.DataFrame(flows)
             fflows['Timestamp'] = timeStamp
             fflows = fflows.set_index(['Timestamp'])
             fflows.columns.values[0]='Value'
-            fflows.to_csv(flows_Folder+'\\Link_'+str(wn.link_name_list[j])+'.csv')
+            fflows.to_csv(flows_Folder+'/Link_'+str(wn.link_name_list[j])+'.csv')
             del fflows, flows
     
-        fscenariosinfo = open(Sc+'\\Scenario-'+str(scNum)+'_info.csv', 'wb')
+        fscenariosinfo = open(Sc+'/Scenario-'+str(scNum)+'_info.csv', 'w')
         fscenariosinfo.write("Description , Value\n")     
         fscenariosinfo.write("{} , {}\n".format('Network_Name', inp))
         fscenariosinfo.write("{} , {}\n".format('Duration', str(durationHours)+' hours'))
-        fscenariosinfo.write("{} , {}\n".format('Time_Step', str(wn.options.report_timestep/60)+' min'))
+        fscenariosinfo.write("{} , {}\n".format('Time_Step', str(wn.options.time.report_timestep/60)+' min'))
         fscenariosinfo.write("{} , {}\n".format('Uncertainty_Topology_(%)', uncertainty_Topology))
         fscenariosinfo.write("{} , {}\n".format('Uncertainty_Length_(%)', uncertainty_Length*100))
         fscenariosinfo.write("{} , {}\n".format('Uncertainty_Diameter_(%)', uncertainty_Diameter*100))
@@ -379,18 +385,18 @@ if __name__ == '__main__':
 
     t = time.time()
     
-    NumScenarios = 10
+    NumScenarios = 200
     scArray = range(1, NumScenarios+1)
     
     numCores = multiprocessing.cpu_count()
     p = multiprocessing.Pool(4)
-    p.map(runScenarios, range(1,NumScenarios))
+    p.map(runScenarios, range(1,NumScenarios+1))
     p.close()
     p.join()
 
     labelScenarios = []
     for i in scArray:
-        if len(os.listdir(benchmark + INP +'\\Scenario-'+str(i)+'\\Leaks')):
+        if len(os.listdir(benchmark + INP +'/Scenario-'+str(i)+'/Leaks')):
             labelScenarios.append(1.0)
         else:
             labelScenarios.append(0.0)
@@ -399,7 +405,7 @@ if __name__ == '__main__':
     flabels2['Scenario'] = scArray
     flabels2 = flabels2.set_index(['Scenario'])
     flabels2.columns.values[0]='Label'
-    flabels2.to_csv(benchmark+ INP+'\\Labels.csv')
+    flabels2.to_csv(benchmark+ INP+'/Labels.csv')
     del flabels2, labelScenarios
     
     #scNum = 1
