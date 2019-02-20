@@ -123,7 +123,7 @@ citations:
 - The initial history matrix(matrix of data-vectors) was "cleaned" by removing outlier vectors with a significance factor alpha_1. Alpha_2 was used for future outlying vectors
 - Has a table of reasons for changes in vectors and corresponding change conditions
 - Resulted in 0.40% False Positive Rate(FPR) and 71.43% true positive rate(TPR)
-- Method removes wather impact on burst detection
+- Method removes weather impact on burst detection
 - Method is good on small data sets, vs bigger data sets required by other data-driven methods
 - Parameters alpha_1, alpha_2 and size of the detection window decieds the results(FPR/TPR) of the method.
 - Has two undetectable outliers
@@ -250,11 +250,6 @@ url: https://ojs.library.queensu.ca/index.php/wdsa-ccw/article/view/12315/7911
 ## Why to read:
 - Benchmarking and datasets
 
-### Model-based leak detection and location in water distribution networks considering an extended-horizon analysis of pressure sensitivities
-url: https://iwaponline.com/jh/article/16/3/649/3082/Model-based-leak-detection-and-location-in-water?searchresult=1
-## Why to read:
-- Bunch of current leak detection aglorithms, no AI involved
-
 
 ### Risk-based sensor placement methods for burst/leak detection in water distribution systems 
 url: https://iwaponline.com/ws/article/17/6/1663/38191/Risk-based-sensor-placement-methods-for-burst-leak?searchresult=1
@@ -300,14 +295,116 @@ url: https://ieeexplore.ieee.org/document/6265794
 - Uses sensitivity matrices and wavelet analysis to generate a comparision matrix, that is then used with a voting system to localize the leaks
 
 ## Summary:
-- Focuses on multiple leak detection, instead of the standard single leak detection
+- Focuses on multiple leak detection, instead of the standard single leak detection, is done using 14 steps:
+    1. Obtain sensitivity matrices by subracting the pressure matrix with a leak of magnitude l at node j from the pressure matrix without any leaks
+    2. Perform the Wavelet Analysis, calculating the wavelet coefficients Cs and Csa from Sm and Sa
+    3. Binarize the matrices Cs, Csa and Rab to get Csb, Csab, Rab which has seperated the imaginary and real parts and binirized by checking if the values are greater then 0.
+    4. Obtain the comparision Matrix(n,m) =  sum(CSB^(Rk)_(n,m) xor Cbs) and more
+- Compared with Angle between vectors; WA is better with measurement noise(noise in pressure) while angle between vectors is better with flow noise.
+- But all methods are bad with noise, best results is 93%, but then gets only closest 2. degree neighbour.
 
 
 ## Evaluation/Master ideas:
-- Find a better solution for missing data then setting sensor to 0
-    - dynamic? If no data, just ignore the sensor?
-- Paper suggests:
-    - Optimizing p and q, suggests genetic algorithm
-    - Identifying minimum detectavle burst size
-    - Reduce FP connected with customer demand(seen as normal behavior)
-    - More precise burst location using the network topology
+- Also look at multiple leak detection
+- get better detection with added noise
+
+### Model-based leak detection and location in water distribution networks considering an extended-horizon analysis of pressure sensitivities
+url: https://iwaponline.com/jh/article/16/3/649/3082/Model-based-leak-detection-and-location-in-water?searchresult=1
+
+## Context:
+- 5 different model-based leak detection methods are presented and compared
+- Also very good overview of the state of the art
+
+## Goal/Motivation:
+- New model-based method compared with 5 others
+
+## Related work:
+
+## Methodology:
+- Model-based leak detection method using sensitivity matrices and residues
+- Binarized sensitivity method:
+    1. Binirize sensitivity matrix using a threshold
+    2. Binirize residue based on threshold
+    3. Compare the residue vector with each coloumn of the sens matrix, if equal this indicate a leak
+    4. The comparisons are stored in a matrix, and a leak indication vector is created by summing the rows of the matrix
+    5. The leak node is the index og the biggest component of the leak vector
+    6. The leak magnitude can be estimated by finding the S coloumn that lies closest to residual vector
+- Angle between bectors method
+    1. Find the cosine distance between each coloumn of S and the residue vector
+    2. Calculate the mean angle in the time window
+    3. Candidate leak is the node with the least mean angle
+    4. location is done as step 6
+- Correlation method
+    1. calculate the correlation between residue and coloums of S (formula in paper)
+    2. calculate the mean correlation
+    3. Leak is the smallest mean correlation
+    4. location is done as step 6
+- Euclidean distance method, only works well when the leak has the same magnitude as the one used to compute the sensitivity matrix
+    1. calculate the euclidean distance between columns of S and the residue vector
+    2. calculate the mean distance
+    3. leak node is the one with the smallest mean distance
+    4. locatrion as before 
+- Least square optimization method, gives an indication of the leak size aswell as the leak node
+    1. Oposite of the other solutions, it calcualtes the most appropriate leak size first by optimizing a least square equation found in the paper
+    2. Then the leak node is the one with the mininal index
+
+## Summary:
+- Bin. method is weak because the threshold is hard to set
+- For Euclidean dist the problem is noise and demand patterns
+- Cosine dist and least square opt is the best
+- Localization:
+    - Angle method: Detects 80%, 88% of the leak nodes within 2m, the max is on 700m, mean is 100m, reducing the number of sensors has litle effect
+    - Optimization method: 81% and 89% detection with 2m, not as good as angle methods, but gives an approx of the leak size, with is nice
+    - Correlation, not as accurate as the others.
+
+### Leakage fault detection in district metered areas of water distribution systems
+url: https://iwaponline.com/jh/article/14/4/992/3203/Leakage-fault-detection-in-district-metered-areas
+
+## Context:
+- Analyse the inflow to a DMA and learn the weekly periodic DMA inflow dynamic, i.e. a model based approach
+- Currently uses Night flow analysis(NFA), this is prone to not detect slowly increasing leaks(would be viewed as demand)
+- Problem with model based: may not have well calibrated models, as well as representative consumer demand models
+- Transiant analysis requires high freq. sampling
+
+## Goal/Motivation:
+- Model based
+
+## Related work:
+- Savic et al. (2009) - disadvantages with transient analysis
+
+## Methodology:
+- Presented method:
+    - Update coefs of fourier series to reprisent demand changes. The offset term is used to id leaks. Found to be good at detecting small leaks
+- Split the signal into 2; The longterm signal(yearly, ignored in this paper) and the shortterm(weekly)
+- Create a approximation of the weekly demand pattern represented as a fourier series
+- The initial approximation is calculated using historical data
+- Then "learns" using a learning rule, eq 6 in paper, containing a diagonal learning matrix G, 0 < Gi < 2, has same problems as regular learning rule( too small => slow learning, too big => may change to drastic)
+- The leak detection is done using CUSUM on the mean of the estimated weekly demand, and there is a leak if the CUSUM is greater than a treshold
+- The treshold depends on te DMA inflow variance
+- Leak magnitude is calculated as the average flow increase due to the leak
+- Night flow is done by just checking differenece in previous aveerage nighttime flow measurements, has same treshold problem
+- Window size can be adjusted to tweak the FPR and TPR
+- uses interval of 5 min
+- Data sanitazation is done through tresholding
+- Increasing the number of fourier terms increases learning performance up to a certain point
+- Results:
+    - Approximation method uses parameters for quick learning, not optimal accuricy 
+    - Threshold set to not give any FP
+    - Has slow detection, but high accuricy. Detection speed can be increased by changing learning rate and detection treshold
+    - Shows graph showing problem with night-flow analysis
+    - Has worse accuricy, but quickers detection
+    - Adaptive learning isn't affected by leakages that isn't detected within the time window(but can still only detect new leakages) 
+
+## Summary:
+- Current solution; Measure at DMA inlets and outlets and detection using treshold or manual operator observation
+- Mentions the problems of summer and winter time
+- AI application in leak fault detection:
+    - Fuzzy min-max NN for pattern recognition
+    - ANN for leak location and magnitude detection using pressure and flow
+    - Fuzzy interface for confidence intervals(in leak detection)
+    - GA for calibrating models
+    - Kalman filters
+
+
+#### WHO, gives examples of damage from leakage
+url: https://apps.who.int/iris/bitstream/handle/10665/66893/WHO_SDE_WSH_01.1_eng.pdf?sequence=1
