@@ -105,15 +105,15 @@ class ScenarioController:
         # plot
         fig, ax = plt.subplots(4, sharex=True)
 
-        pax = pressureSlize.plot(ax=ax[0])
-        pax.set_ylabel("Pressure")
-        pax.get_legend().set_visible(False)
-        fax = flowsSlize.plot(ax=ax[1])
-        fax.set_ylabel("Flow")
-        fax.get_legend().set_visible(False)
-        dax = demandsSlize.plot(ax=ax[2])
+        dax = demandsSlize.plot(ax=ax[0])
         dax.set_ylabel("Demand")
         dax.get_legend().set_visible(False)
+        pax = pressureSlize.plot(ax=ax[1])
+        pax.set_ylabel("Pressure")
+        pax.get_legend().set_visible(False)
+        fax = flowsSlize.plot(ax=ax[2])
+        fax.set_ylabel("Flow")
+        fax.get_legend().set_visible(False)
         lax = labelSlize.plot(ax=ax[3])
         lax.set_ylabel("Label")
         lax.get_legend().set_visible(False)
@@ -123,7 +123,7 @@ class ScenarioController:
         handles, labels = dax.get_legend_handles_labels()
         fig.legend(handles, labels, loc="center left", bbox_to_anchor=(0.6, 0.5), ncol=2)
         ticklabels = pressureSlize.index
-        pax.xaxis.set_major_formatter(ticker.FixedFormatter(ticklabels))
+        lax.xaxis.set_major_formatter(ticker.IndexFormatter(ticklabels))
         pax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.2f'))
 
         plt.xticks(rotation=90)
@@ -135,5 +135,5 @@ class ScenarioController:
 
 # testing
 if __name__ == "__main__":
-    sc = ScenarioController("NetworkModels/Benchmarks/Hanoi_CMH/Scenario-4", readPressures=False)
-    sc.plotTimeInterval("2017-02-19 00:00:00", "2017-02-21 00:00:00")
+    sc = ScenarioController("NetworkModels/Benchmarks/Hanoi_CMH/Scenario-199", readPressures=False)
+    sc.plotTimeInterval("2017-01-12 01:00:00", "2017-01-24 10:45:00")

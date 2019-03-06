@@ -27,7 +27,7 @@ sim_step_minutes = 15
 
 
 # Set duration
-num_days = 150
+num_days = 30
 durationHours = 24*num_days
 timeStamp = pandas.date_range("2017-01-01 00:00", periods=durationHours*(60/sim_step_minutes), freq=str(sim_step_minutes)+"min")
 

@@ -23,8 +23,8 @@ class LeakFinder(nn.Module):
         if hidden:
             self.hidden = hidden
         else:
-            self.hidden = (torch.randn(ns.numLSTMLayers, 1, ns.hiddenSize),
-                           torch.randn(ns.numLSTMLayers, 1, ns.hiddenSize))
+            self.hidden = (torch.zeros(ns.numLSTMLayers, 1, ns.hiddenSize),
+                           torch.zeros(ns.numLSTMLayers, 1, ns.hiddenSize))
         return self.hidden
 
     def forward(self, inp):

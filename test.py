@@ -16,12 +16,11 @@ trainingSet, testSet = tools.getDataset(percentTestScenarios=ns.percentTestScena
 print("Dataset read in time", time.time() - dsTime)
 print("Trainset size:", len(trainingSet), "Testset size:", len(testSet))
 print("Trainging on", [x[2] for x in trainingSet])
+print("Testing on", [x[2] for x in testSet])
 
 model = LeakFinder()
 
 optimizer = ns.optimizer(model.parameters(), lr=ns.lr)
-lossFunc = ns.loss
-testLossFunc = nn.L1Loss()
 
 trainLoss = []
 testLoss = []
@@ -43,35 +42,28 @@ for epoch in range(ns.numEpochs):
                                   torch.split(target, ns.seqLength)):
             output, _ = model(tensor)
 
-            if output.min() < 0:
-                print(tensor)
-                print(output)
-
-            loss = lossFunc(output, target)
+            loss = ns.trainLossFunc(output, target)
             loss.backward(retain_graph=True)
-            trainLoss.append(loss.item())
-            # for p, n in zip(model.model[-1].parameters(), model.model[-1]._all_weights[0]):
-            #     if n[:6] == 'weight':
-            #         print('===========\ngradient:{}\n----------\n{}'.format(n,p.grad))
-            # if trainLoss[-1] < 0.32:
-            #     exit()
             optimizer.step()
-            optimizer.zero_grad()
-        print(scenario, "trainLoss:", testLossFunc(model(tensor)[0], target))
+            trainLoss.append(loss.item())
+
+        print(scenario, "trainLoss:", ns.trainLossFunc(model(tensor)[0], target))
+        optimizer.zero_grad()
 
     model.eval()
     for tensor, target, scenario in testSet:
         model.init_hidden()
-
         model.zero_grad()
 
-        output, _ = model(tensor)
+        initHiddenMarker = len(testLoss)
+        axes[1].axvline(x=initHiddenMarker, linestyle=":")
 
-        if output.min() < 0:
-                print(tensor)
-                print(output)
+        for tensor, target in zip(torch.split(tensor, ns.seqLength),
+                                  torch.split(target, ns.seqLength)):
+            output, _ = model(tensor)
 
-        testLoss.append(testLossFunc(output, target).item())
+            testLoss.append(ns.testLossFunc(output, target).item())
+        print("testloss", ns.testLossFunc(model(tensor)[0], target).item())
         print(scenario, "testLoss:", testLoss[-1])
 
     # ploting
@@ -82,6 +74,6 @@ for epoch in range(ns.numEpochs):
     plt.draw()
     plt.pause(0.0004)
 
+print("total training time:", time.time() - trainigTime)
 plt.ioff()
 plt.show()
-print("total training time:", time.time() - trainigTime)

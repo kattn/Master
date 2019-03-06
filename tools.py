@@ -65,7 +65,10 @@ def getDataset(pathToScenarios="NetworkModels/Benchmarks/Hanoi_CMH",
             target = torch.tensor(df["Label"].values, dtype=torch.float32)
             target = target.view(-1, 1, 1)
             tensor = torch.tensor(df.loc[:, df.columns.difference(["Label", "Timestamp"])].values, dtype=torch.float32)
-            tensor = normalize(tensor.view(-1, 1, ns.numSensorValues), p=1, dim=2)
+            if ns.normalizeInput:
+                tensor = normalize(tensor.view(-1, 1, ns.numSensorValues), p=1, dim=2)
+            else:
+                tensor = tensor.view(-1, 1, ns.numSensorValues)
             data.append((tensor, target, dirEntry.path.split("/")[-1]))
             print(count, "files on the wall,", count, "files to read")
             print("Take one down, pass it around,", count-1, "files on the wall")
