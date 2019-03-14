@@ -133,6 +133,58 @@ class ScenarioController:
         plt.show()
 
 
+def getDataset(pathToScenarios="NetworkModels/Benchmarks/Hanoi_CMH",
+               numTestScenarios=0,
+               percentTestScenarios=0.1):
+    data = []
+
+    # Decide if specific scenarios or just a number of them
+    if len(ns.scenarios) != 0:
+        scenarios = ["Scenario-" + str(x) for x in ns.scenarios]
+        count = len(ns.scenarios)
+    else:
+        count = ns.numScenarios
+
+    for dirEntry in scandir(pathToScenarios):
+        if dirEntry.is_dir():
+
+            # Decide if specific scenarios or just a number of them
+            if len(ns.scenarios) != 0:
+                if dirEntry.path.split("/")[-1] not in scenarios:
+                    continue
+            else:
+                if count == 0:
+                    break
+
+            sc = ScenarioController(dirEntry.path)
+            df = sc.getAllData()
+            target = torch.tensor(df["Label"].values, dtype=torch.float32)
+            target = target.view(-1, 1)
+            tensor = torch.tensor(df.loc[:, df.columns.difference(["Label", "Timestamp"])].values, dtype=torch.float32)
+            if ns.normalizeInput:
+                tensor = normalize(tensor.view(-1, 1, ns.numSensorValues), p=1, dim=2)
+            else:
+                tensor = tensor.view(-1, ns.numSensorValues)
+            tensor = tensor.view(-1, 1, ns.numSensorValues)
+            target = target.view(-1, 1, ns.numClasses)
+
+            data.append((tensor, target, dirEntry.path.split("/")[-1]))
+            print(count, "files on the wall,", count, "files to read")
+            print("Take one down, pass it around,", count-1, "files on the wall")
+            count -= 1
+
+    numTests = 0
+    if numTestScenarios != 0:
+        numTests = numTestScenarios
+    if percentTestScenarios != 0.0:
+        numTests = int(len(data)*percentTestScenarios)
+
+    random.shuffle(data)
+    trainingSet = data[numTests:]
+    testSet = data[:numTests]
+    return trainingSet, testSet
+
+
 # testing
 if __name__ == "__main__":
     sc = ScenarioController("NetworkModels/Benchmarks/Hanoi_CMH/Scenario-199", readPressures=False)
