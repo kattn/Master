@@ -37,7 +37,7 @@ timeStamp = pandas.date_range("2017-01-01 00:00", periods=durationHours*(60/sim_
 
 labelScenarios = []
 uncertainty_Topology = 'NO'
-INP = "Hanoi_CMH"
+INP = "Net1"
   
 
 # RUN SCENARIOS

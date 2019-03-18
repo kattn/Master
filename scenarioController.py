@@ -1,11 +1,14 @@
 import pandas
+import torch
 from os import listdir
 from os.path import isfile, join
 from natsort import natsorted
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import random
 
 import tools
+from os import scandir
 
 
 class ScenarioController:
@@ -31,7 +34,8 @@ class ScenarioController:
             self.labels = self.readLabels()
 
     def readPressures(self):
-        self.pressures = tools.readCVSFolder(self.pathToScenario + "Pressures/")
+        self.pressures = tools.readCVSFolder(
+            self.pathToScenario + "Pressures/")
         self.pressures.set_index("Timestamp", drop=True, inplace=True)
         return self.pressures
 
@@ -46,7 +50,9 @@ class ScenarioController:
         return self.flows
 
     def readLabels(self):
-        self.labels = pandas.read_csv(self.pathToScenario + "Labels.csv", names=["Timestamp", "Label"], header=0)
+        self.labels = pandas.read_csv(
+            self.pathToScenario + "Labels.csv",
+            names=["Timestamp", "Label"], header=0)
         self.labels.set_index("Timestamp", drop=True, inplace=True)
         return self.labels
 
@@ -97,9 +103,9 @@ class ScenarioController:
 
     def plotTimeInterval(self, start, stop):
         # slize measures to plot
-        pressureSlize = self.getPressures(withLabels=False).loc[start:stop, "Node_1":]
+        pressureSlize = self.getPressures(withLabels=False).loc[start:stop, :]
         flowsSlize = self.getFlows(withLabels=False).loc[start:stop]
-        demandsSlize = self.getDemands(withLabels=False).loc[start:stop, "Node_1":]
+        demandsSlize = self.getDemands(withLabels=False).loc[start:stop, :]
         labelSlize = self.getLabels().loc[start:stop]
 
         # plot
@@ -121,7 +127,9 @@ class ScenarioController:
         # prettify plot
         fig.subplots_adjust(hspace=0)
         handles, labels = dax.get_legend_handles_labels()
-        fig.legend(handles, labels, loc="center left", bbox_to_anchor=(0.6, 0.5), ncol=2)
+        fig.legend(
+            handles, labels, loc="center left",
+            bbox_to_anchor=(0.6, 0.5), ncol=2)
         ticklabels = pressureSlize.index
         lax.xaxis.set_major_formatter(ticker.IndexFormatter(ticklabels))
         pax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.2f'))
@@ -133,23 +141,23 @@ class ScenarioController:
         plt.show()
 
 
-def getDataset(pathToScenarios="NetworkModels/Benchmarks/Hanoi_CMH",
+def getDataset(pathToScenarios,
                numTestScenarios=0,
                percentTestScenarios=0.1):
     data = []
 
     # Decide if specific scenarios or just a number of them
-    if len(ns.scenarios) != 0:
-        scenarios = ["Scenario-" + str(x) for x in ns.scenarios]
-        count = len(ns.scenarios)
+    if len(tools.scenarios) != 0:
+        scenarios = ["Scenario-" + str(x) for x in tools.scenarios]
+        count = len(tools.scenarios)
     else:
-        count = ns.numScenarios
+        count = tools.numScenarios
 
     for dirEntry in scandir(pathToScenarios):
         if dirEntry.is_dir():
 
             # Decide if specific scenarios or just a number of them
-            if len(ns.scenarios) != 0:
+            if len(tools.scenarios) != 0:
                 if dirEntry.path.split("/")[-1] not in scenarios:
                     continue
             else:
@@ -158,19 +166,25 @@ def getDataset(pathToScenarios="NetworkModels/Benchmarks/Hanoi_CMH",
 
             sc = ScenarioController(dirEntry.path)
             df = sc.getAllData()
+            numColumnsTensor = tools.getNumSensors("t")
+            numColumnsTarget = tools.numClasses
             target = torch.tensor(df["Label"].values, dtype=torch.float32)
             target = target.view(-1, 1)
-            tensor = torch.tensor(df.loc[:, df.columns.difference(["Label", "Timestamp"])].values, dtype=torch.float32)
-            if ns.normalizeInput:
-                tensor = normalize(tensor.view(-1, 1, ns.numSensorValues), p=1, dim=2)
+            tensor = torch.tensor(
+                df.loc[:, df.columns.difference(
+                    ["Label", "Timestamp"])].values, dtype=torch.float32)
+            if tools.normalizeInput:
+                tensor = tools.normalize(
+                    tensor.view(-1, 1, numColumnsTensor), p=1, dim=2)
             else:
-                tensor = tensor.view(-1, ns.numSensorValues)
-            tensor = tensor.view(-1, 1, ns.numSensorValues)
-            target = target.view(-1, 1, ns.numClasses)
+                tensor = tensor.view(-1, numColumnsTensor)
+            tensor = tensor.view(-1, 1, numColumnsTensor)
+            target = target.view(-1, 1, numColumnsTarget)
 
             data.append((tensor, target, dirEntry.path.split("/")[-1]))
             print(count, "files on the wall,", count, "files to read")
-            print("Take one down, pass it around,", count-1, "files on the wall")
+            print(
+                "Take one down, pass it around,", count-1, "files on the wall")
             count -= 1
 
     numTests = 0
@@ -187,5 +201,6 @@ def getDataset(pathToScenarios="NetworkModels/Benchmarks/Hanoi_CMH",
 
 # testing
 if __name__ == "__main__":
-    sc = ScenarioController("NetworkModels/Benchmarks/Hanoi_CMH/Scenario-199", readPressures=False)
-    sc.plotTimeInterval("2017-01-12 01:00:00", "2017-01-24 10:45:00")
+    sc = ScenarioController(
+        "NetworkModels/Benchmarks/Net1/Scenario-91", readPressures=False)
+    sc.plotTimeInterval("2017-01-01 00:00:00", "2017-01-28 10:45:00")
