@@ -1,5 +1,6 @@
 import time
 import matplotlib.pyplot as plt
+import torch
 
 
 class Trainer():
@@ -46,7 +47,7 @@ class Trainer():
 
             self.trainingAxis.plot(self.trainingDataPoints)
             plt.draw()
-            # plt.pause(0.0004)  # TODO: test removeing this, adds lag
+            plt.pause(0.0004)
 
             self.testModule(testSet)
 
@@ -86,7 +87,7 @@ class Trainer():
             output, _ = self.module(tensor)
 
             self.testDataPoints.append(
-                self.lossFunction(output, target).item())
+                torch.sum(torch.abs(output - target)))
             print(scenario, "testLoss:", self.testDataPoints[-1])
 
     def printTrainingTime(self, identifier):

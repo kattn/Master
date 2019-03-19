@@ -141,9 +141,17 @@ class ScenarioController:
         plt.show()
 
 
-def getDataset(pathToScenarios,
-               numTestScenarios=0,
-               percentTestScenarios=0.1):
+def getDataset(
+        pathToScenarios,
+        dataStructure,
+        numTestScenarios=0,
+        percentTestScenarios=0.2):
+    """
+    The data structure parameter structures the input accordingly:
+    c -- combines the flow and pressure measurements
+    s -- seperates the flow and pressure measurements into tuples
+    """
+
     data = []
 
     # Decide if specific scenarios or just a number of them
@@ -165,23 +173,49 @@ def getDataset(pathToScenarios,
                     break
 
             sc = ScenarioController(dirEntry.path)
-            df = sc.getAllData()
-            numColumnsTensor = tools.getNumSensors("t")
+
+            dfLabel = sc.getLabels()
             numColumnsTarget = tools.numClasses
-            target = torch.tensor(df["Label"].values, dtype=torch.float32)
+            target = torch.tensor(dfLabel["Label"].values, dtype=torch.float32)
             target = target.view(-1, 1)
-            tensor = torch.tensor(
-                df.loc[:, df.columns.difference(
-                    ["Label", "Timestamp"])].values, dtype=torch.float32)
-            if tools.normalizeInput:
-                tensor = tools.normalize(
-                    tensor.view(-1, 1, numColumnsTensor), p=1, dim=2)
-            else:
-                tensor = tensor.view(-1, numColumnsTensor)
-            tensor = tensor.view(-1, 1, numColumnsTensor)
             target = target.view(-1, 1, numColumnsTarget)
 
-            data.append((tensor, target, dirEntry.path.split("/")[-1]))
+            if dataStructure == "c":
+                df = sc.getAllData()
+                numColumnsTensor = tools.getNumSensors("t")
+                inp = torch.tensor(
+                    df.loc[:, df.columns.difference(
+                        ["Label", "Timestamp"])].values, dtype=torch.float32)
+                if tools.normalizeInput:
+                    inp = tools.normalize(
+                        inp.view(-1, 1, numColumnsTensor), p=1, dim=2)
+                else:
+                    inp = inp.view(-1, numColumnsTensor)
+                inp = inp.view(-1, 1, numColumnsTensor)
+
+            elif dataStructure == "s":
+                dfPressure = sc.getPressures(False)
+                dfFlow = sc.getFlows(False)
+                numPresSensor = tools.getNumSensors("p")
+                numFlowSensor = tools.getNumSensors("f")
+
+                presInp = torch.tensor(
+                    dfPressure.loc[:, dfPressure.columns.difference(
+                        ["Label", "Timestamp"])].values, dtype=torch.float32)
+                flowInp = torch.tensor(
+                    dfFlow.loc[:, dfFlow.columns.difference(
+                        ["Label", "Timestamp"])].values, dtype=torch.float32)
+                if tools.normalizeInput:
+                    presInp = tools.normalize(
+                        presInp.view(-1, 1, numPresSensor), p=1, dim=2)
+                    flowInp = tools.normalize(
+                        flowInp.view(-1, 1, numFlowSensor), p=1, dim=2)
+                else:
+                    presInp = presInp.view(-1, numPresSensor)
+                    flowInp = flowInp.view(-1, numFlowSensor)
+                inp = (presInp, flowInp)
+
+            data.append((inp, target, dirEntry.path.split("/")[-1]))
             print(count, "files on the wall,", count, "files to read")
             print(
                 "Take one down, pass it around,", count-1, "files on the wall")

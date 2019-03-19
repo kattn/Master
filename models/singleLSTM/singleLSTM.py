@@ -15,14 +15,14 @@ dropout = 0.1
 
 outputFunction = nn.Sigmoid()
 
-lr = 0.01
-lossFunction = nn.MSELoss()
-optimizer = optim.Adam
-
-numEpochs = 1000
-
 
 class SingleLSTM(nn.Module):
+    lr = 0.01
+    lossFunction = nn.MSELoss()
+    optimizer = optim.Adam
+
+    numEpochs = 10
+
     def __init__(self):
         super(SingleLSTM, self).__init__()
         self.hidden = self.init_hidden()
@@ -34,7 +34,7 @@ class SingleLSTM(nn.Module):
         self.decoder = nn.Linear(
             hiddenSize*(bidirectional+1), tools.numClasses)
 
-        self.path = "models/singleLSTM.pt"
+        self.path = "models/singleLSTM/singleLSTM.pt"
 
     def init_hidden(self, hidden=None):
         if hidden:
