@@ -19,11 +19,11 @@ outputFunction = nn.Sigmoid()
 
 
 class CNNGRU(nn.Module):
-    lr = 0.01
+    lr = 0.006
     lossFunction = nn.BCELoss()
     optimizer = optim.Adam
 
-    numEpochs = 100
+    numEpochs = 10
 
     def __init__(self):
         super(CNNGRU, self).__init__()
