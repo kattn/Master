@@ -61,34 +61,36 @@ class Trainer():
         plt.ioff()
         plt.show()
 
-    def trainModule(self, trainingSet):
+    def trainModule(self, trainingSets):
         self.module.train()
-        for tensor, target, scenario in trainingSet:
-            self.module.init_hidden()
-            self.optimizer.zero_grad()
+        for trainingSet, targetSet, scenario in trainingSets:
+            for tensor, target in zip(trainingSet, targetSet):
+                self.module.init_hidden()
+                self.optimizer.zero_grad()
 
-            output, _ = self.module(tensor)
+                output, _ = self.module(tensor)
 
-            loss = self.lossFunction(output, target)
-            loss.backward(retain_graph=True)
-            self.optimizer.step()
+                loss = self.lossFunction(output, target)
+                loss.backward(retain_graph=True)
+                self.optimizer.step()
 
-            self.trainingDataPoints.append(loss.item())
-            print(scenario, "trainLoss:", self.trainingDataPoints[-1])
+                self.trainingDataPoints.append(loss.item())
+            print("Trained on", scenario)
 
         self.module.eval()  # So the module is defaultly in eval mode
 
-    def testModule(self, testSet):
+    def testModule(self, testSets):
         self.module.eval()
-        for tensor, target, scenario in testSet:
-            self.module.init_hidden()
-            self.module.zero_grad()
+        for testSet, targetSet, scenario in testSets:
+            for tensor, target in zip(testSet, targetSet):
+                self.module.init_hidden()
+                self.module.zero_grad()
 
-            output, _ = self.module(tensor)
+                output, _ = self.module(tensor)
 
-            self.testDataPoints.append(
-                torch.sum(torch.abs(output - target)))
-            print(scenario, "testLoss:", self.testDataPoints[-1])
+                self.testDataPoints.append(
+                    torch.sum(torch.abs(output - target)))
+            print("Tested on", scenario)
 
     def printTrainingTime(self, identifier):
         """Prints how long the module has been training, with a given

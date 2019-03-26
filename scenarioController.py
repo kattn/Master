@@ -177,8 +177,8 @@ def getDataset(
             dfLabel = sc.getLabels()
             numColumnsTarget = tools.numClasses
             target = torch.tensor(dfLabel["Label"].values, dtype=torch.float32)
-            target = target.view(-1, 1)
             target = target.view(-1, 1, numColumnsTarget)
+            target = torch.unsqueeze(target, 1)
 
             if dataStructure == "c":
                 df = sc.getAllData()
@@ -191,7 +191,7 @@ def getDataset(
                         inp.view(-1, 1, numColumnsTensor), p=1, dim=2)
                 else:
                     inp = inp.view(-1, numColumnsTensor)
-                inp = inp.view(-1, 1, numColumnsTensor)
+                inp = torch.unsqueeze(inp, 1)
 
             elif dataStructure == "s":
                 dfPressure = sc.getPressures(False)
@@ -206,15 +206,16 @@ def getDataset(
                     dfFlow.loc[:, dfFlow.columns.difference(
                         ["Label", "Timestamp"])].values, dtype=torch.float32)
                 if tools.normalizeInput:
-                    presInp = tools.normalize(
-                        presInp.view(-1, 1, numPresSensor), p=1, dim=2)
-                    flowInp = tools.normalize(
-                        flowInp.view(-1, 1, numFlowSensor), p=1, dim=2)
+                    presInp = torch.unsqueeze(tools.normalize(
+                        presInp.view(-1, 1, numPresSensor), p=1, dim=2), 1)
+                    flowInp = torch.unsqueeze(tools.normalize(
+                        flowInp.view(-1, 1, numFlowSensor), p=1, dim=2), 1)
                 else:
-                    presInp = presInp.view(-1, numPresSensor)
-                    flowInp = flowInp.view(-1, numFlowSensor)
-                inp = (presInp, flowInp)
-
+                    presInp = torch.unsqueeze(
+                        presInp.view(-1, 1, numPresSensor), 1)
+                    flowInp = torch.unsqueeze(
+                        flowInp.view(-1, 1, numFlowSensor), 1)
+                inp = [(torch.tensor(pres), torch.tensor(flow)) for pres, flow in zip(presInp.tolist(), flowInp.tolist())]
             data.append((inp, target, dirEntry.path.split("/")[-1]))
             print(count, "files on the wall,", count, "files to read")
             print(
