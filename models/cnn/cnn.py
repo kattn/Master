@@ -9,17 +9,14 @@ import tools
 torch.manual_seed(1)
 
 kernelSize = 5
-hiddenSize = 10
-# since the GRU gets inp from two CNNs
+
 inpSize = tools.getNumSensors("t") - (kernelSize-1)*2
-bidirectional = True
-numLayers = 2
 dropout = 0.1
 
 outputFunction = nn.Sigmoid()
 
 
-class CNNGRU(nn.Module):
+class CNN(nn.Module):
     lr = 0.003
     lossFunction = nn.BCELoss()
     optimizer = optim.Adam
@@ -27,7 +24,7 @@ class CNNGRU(nn.Module):
     numEpochs = 10
 
     def __init__(self):
-        super(CNNGRU, self).__init__()
+        super(CNN, self).__init__()
         self.hidden = self.init_hidden()
         self.output = outputFunction
         self.presCNN = nn.Sequential(
@@ -54,7 +51,7 @@ class CNNGRU(nn.Module):
         if hidden:
             self.hidden = hidden
         else:
-            self.hidden = torch.randn(
+            self.hidden = torch.zeros(
                     numLayers*(bidirectional+1), 1, hiddenSize)
 
         return self.hidden

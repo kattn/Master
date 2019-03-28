@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -41,7 +42,7 @@ class DualLSTM(nn.Module):
             lHiddenSize*(bidirectional+1)+rHiddenSize*(bidirectional+1),
             tools.numClasses)
 
-        self.path = "models/dualLSTM/dualLSTM.pt"
+        self.modelPath = __file__.replace(os.getcwd(), "")[1:-3] + ".pt"
 
     def init_hidden(self, hidden=None):
         if hidden:

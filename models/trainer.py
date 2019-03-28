@@ -64,6 +64,7 @@ class Trainer():
     def trainModule(self, trainingSets):
         self.module.train()
         for trainingSet, targetSet, scenario in trainingSets:
+            accumulatedLoss = []
             for tensor, target in zip(trainingSet, targetSet):
                 self.module.init_hidden()
                 self.optimizer.zero_grad()
@@ -74,23 +75,35 @@ class Trainer():
                 loss.backward(retain_graph=True)
                 self.optimizer.step()
 
-                self.trainingDataPoints.append(loss.item())
-            print("Trained on", scenario)
+                accumulatedLoss.append(loss.item())
+
+            self.trainingDataPoints += accumulatedLoss
+            # .append(
+            #    sum(accumulatedLoss)/len(accumulatedLoss))
+            print(
+                "Training", scenario, "loss",
+                self.trainingDataPoints[-1])
 
         self.module.eval()  # So the module is defaultly in eval mode
 
     def testModule(self, testSets):
         self.module.eval()
         for testSet, targetSet, scenario in testSets:
+            accumulatedLoss = []
             for tensor, target in zip(testSet, targetSet):
                 self.module.init_hidden()
                 self.module.zero_grad()
 
                 output, _ = self.module(tensor)
 
-                self.testDataPoints.append(
-                    torch.sum(torch.abs(output - target)))
-            print("Tested on", scenario)
+                accumulatedLoss.append(torch.abs(output - target).item())
+
+            self.testDataPoints += accumulatedLoss
+            # .append(
+            #     sum(accumulatedLoss)/len(accumulatedLoss))
+            print(
+                "Testing", scenario, "loss",
+                self.testDataPoints[-1])
 
     def printTrainingTime(self, identifier):
         """Prints how long the module has been training, with a given
