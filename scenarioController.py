@@ -145,11 +145,18 @@ def getDataset(
         pathToScenarios,
         dataStructure,
         numTestScenarios=0,
-        percentTestScenarios=0.2):
+        percentTestScenarios=0.2,
+        sequenceSize=1,
+        stepSize=1):
     """
     The data structure parameter structures the input accordingly:
     c -- combines the flow and pressure measurements
     s -- seperates the flow and pressure measurements into tuples
+
+    SequenceSize and stepSize decides how the data is split. If the input is
+    invalid the sequenceSize and stepSize are set to default values of 1 and 1.
+    NB: Does not check if the sequenceSize or stepSize is greater the the size
+    of the dataset.
     """
 
     data = []
@@ -160,6 +167,12 @@ def getDataset(
         count = len(tools.scenarios)
     else:
         count = tools.numScenarios
+
+    # Ensure that sequenceSize and stepSize are valid values
+    if sequenceSize < 1:
+        sequenceSize = 1
+    if stepSize < 1:
+        sequenceSize = 1
 
     for dirEntry in scandir(pathToScenarios):
         if dirEntry.is_dir():
@@ -174,24 +187,31 @@ def getDataset(
 
             sc = ScenarioController(dirEntry.path)
 
+            # Read the target vectors
             dfLabel = sc.getLabels()
             numColumnsTarget = tools.numClasses
             target = torch.tensor(dfLabel["Label"].values, dtype=torch.float32)
             target = target.view(-1, 1, numColumnsTarget)
             target = torch.unsqueeze(target, 1)
 
+            # Read the feature vectors
             if dataStructure == "c":
                 df = sc.getAllData()
                 numColumnsTensor = tools.getNumSensors("t")
+
+                # Convert the dataframe to a tensor
                 inp = torch.tensor(
                     df.loc[:, df.columns.difference(
                         ["Label", "Timestamp"])].values, dtype=torch.float32)
+                inp = inp.view(-1, 1, numColumnsTensor)
+
                 if tools.normalizeInput:
-                    inp = tools.normalize(
-                        inp.view(-1, 1, numColumnsTensor), p=1, dim=2)
+                    inp = tools.normalize(inp, p=1, dim=2)
+
+                if stepSize != 1 or sequenceSize != 1:
+                    inp = inp.unfold(0, sequenceSize, stepSize)
                 else:
-                    inp = inp.view(-1, numColumnsTensor)
-                inp = torch.unsqueeze(inp, 1)
+                    inp = inp.unsqueeze(1)
 
             elif dataStructure == "s":
                 dfPressure = sc.getPressures(False)
@@ -199,23 +219,30 @@ def getDataset(
                 numPresSensor = tools.getNumSensors("p")
                 numFlowSensor = tools.getNumSensors("f")
 
+                # Convert the dataframes to a tensors
                 presInp = torch.tensor(
                     dfPressure.loc[:, dfPressure.columns.difference(
                         ["Label", "Timestamp"])].values, dtype=torch.float32)
+                presInp = presInp.view(-1, 1, numPresSensor)
+
                 flowInp = torch.tensor(
                     dfFlow.loc[:, dfFlow.columns.difference(
                         ["Label", "Timestamp"])].values, dtype=torch.float32)
+                flowInp = flowInp.view(-1, 1, numFlowSensor)
+
                 if tools.normalizeInput:
-                    presInp = torch.unsqueeze(tools.normalize(
-                        presInp.view(-1, 1, numPresSensor), p=1, dim=2), 1)
-                    flowInp = torch.unsqueeze(tools.normalize(
-                        flowInp.view(-1, 1, numFlowSensor), p=1, dim=2), 1)
+                    presInp = tools.normalize(presInp, p=1, dim=2)
+                    flowInp = tools.normalize(flowInp, p=1, dim=2)
+
+                if stepSize != 1 or sequenceSize != 1:
+                    presInp = presInp.unfold(0, sequenceSize, stepSize)
+                    flowInp = flowInp.unfold(0, sequenceSize, stepSize)
                 else:
-                    presInp = torch.unsqueeze(
-                        presInp.view(-1, 1, numPresSensor), 1)
-                    flowInp = torch.unsqueeze(
-                        flowInp.view(-1, 1, numFlowSensor), 1)
+                    presInp = torch.unsqueeze(presInp, 1)
+                    flowInp = torch.unsqueeze(flowInp, 1)
+
                 inp = [(torch.tensor(pres), torch.tensor(flow)) for pres, flow in zip(presInp.tolist(), flowInp.tolist())]
+
             data.append((inp, target, dirEntry.path.split("/")[-1]))
             print(count, "files on the wall,", count, "files to read")
             print(
