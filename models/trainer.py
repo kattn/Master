@@ -66,10 +66,14 @@ class Trainer():
         for trainingSet, targetSet, scenario in trainingSets:
             accumulatedLoss = []
             for tensor, target in zip(trainingSet, targetSet):
-                self.module.init_hidden()
+                if hasattr(self.module, 'init_hidden'):
+                    self.module.init_hidden()
                 self.optimizer.zero_grad()
 
-                output, _ = self.module(tensor)
+                if hasattr(self.module, 'init_hidden'):
+                    output, _ = self.module(tensor.transpose(0, 1))
+                else:
+                    output, _ = self.module(tensor)
 
                 loss = self.lossFunction(output, target)
                 loss.backward(retain_graph=True)
@@ -91,7 +95,8 @@ class Trainer():
         for testSet, targetSet, scenario in testSets:
             accumulatedLoss = []
             for tensor, target in zip(testSet, targetSet):
-                self.module.init_hidden()
+                if hasattr(self.module, 'init_hidden'):
+                    self.module.init_hidden()
                 self.module.zero_grad()
 
                 output, _ = self.module(tensor)
