@@ -81,9 +81,8 @@ class Trainer():
 
                 accumulatedLoss.append(loss.item())
 
-            self.trainingDataPoints += accumulatedLoss
-            # .append(
-            #    sum(accumulatedLoss)/len(accumulatedLoss))
+            self.trainingDataPoints.append(
+               sum(accumulatedLoss)/len(accumulatedLoss))
             print(
                 "Training", scenario, "loss",
                 self.trainingDataPoints[-1])
@@ -99,13 +98,17 @@ class Trainer():
                     self.module.init_hidden()
                 self.module.zero_grad()
 
-                output, _ = self.module(tensor)
+                if hasattr(self.module, 'init_hidden'):
+                    output, _ = self.module(tensor.transpose(0, 1))
+                else:
+                    output, _ = self.module(tensor)
 
-                accumulatedLoss.append(torch.abs(output - target).item())
+                accumulatedLoss.append(
+                    torch.sum(torch.abs(output - target)).item()
+                    )
 
-            self.testDataPoints += accumulatedLoss
-            # .append(
-            #     sum(accumulatedLoss)/len(accumulatedLoss))
+            self.testDataPoints.append(
+                sum(accumulatedLoss)/len(accumulatedLoss))
             print(
                 "Testing", scenario, "loss",
                 self.testDataPoints[-1])
