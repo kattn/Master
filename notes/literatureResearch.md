@@ -408,3 +408,97 @@ url: https://iwaponline.com/jh/article/14/4/992/3203/Leakage-fault-detection-in-
 
 #### WHO, gives examples of damage from leakage
 url: https://apps.who.int/iris/bitstream/handle/10665/66893/WHO_SDE_WSH_01.1_eng.pdf?sequence=1
+
+#### Leak localization in water distribution networks using a mixed model-based/data-driven approach
+url: https://www.sciencedirect.com/science/article/pii/S0967066116301526
+
+## Context:
+- Model-based/data-driven approach combined with k-nn classifier for leak localization
+- Works independently of the real leak magnitude(avoids problem with sensitivity matrices)
+
+## Methodology
+- Presents model for leak localization
+    - Creates residues
+    - Classifies into groups of nodes
+    - Uses temporal reasoning by Confusion Matrix, aka use time window and see which node group has the most votes
+- 3 case studies: Hanoi, Limassol and Nova Icària
+    - Specifies the uncertainty added to the data set
+    - uses 200 training and 50 test samples
+
+## Summary
+- Leaks are a problem
+- Traditional appraoch is a passive one
+- Leak detection has problems with uncertaintis in the data
+- Mentions limitations of sensitivity analysis, model-based system and data-driven approaches
+- Uses EPANET to simulate and generate data, also mentions why its needed
+- Uses time window to reduce the impact of noise
+- Adds sensor validation and reconstruction(but not discussed how)
+- Longer time window(tests up to 24hours) gives better accuracy
+- Perez et al (2014) Nova Icària was real test, check to see if open data set
+
+## Backward
+- no new
+
+## Forward
+- Review of Current Technologies and Proposed Intelligent Methodologies for Water Distributed Network Leakage Detection
+    - url: https://ieeexplore.ieee.org/document/8565861
+
+
+#### Novelty detection for time series data analysis in water distribution systems using support vector machines
+url: https://iwaponline.com/jh/article/13/4/672/3111/Novelty-detection-for-time-series-data-analysis-in
+
+See paper for notes
+
+## Backward
+- no new
+
+## Forward
+- Pattern matching and associative artificial neural networks for water distribution system time series data analysis
+    - url: https://iwaponline.com/jh/article/16/3/617/3080/Pattern-matching-and-associative-artificial-neural
+- A comparative study of artificial neural network architectures for time series prediction of water distribution system flow data
+    - url: http://eprints.whiterose.ac.uk/83574/
+- ish: Machine learning approaches for anomaly detection of water quality on a real-world data set
+    - url: file:///home/stud2109/Downloads/Machine_learning_approaches_for_anomaly_detection_.pdf
+
+
+#### Predictive models for forecasting hourly urban water demand
+url: https://www.sciencedirect.com/science/article/pii/S0022169410001861
+
+See paper for notes
+
+## Backward
+- no new
+
+## Forward
+- no new
+
+#### A comparative study of artificial neural network architectures for time series prediction of water distribution system flow data
+- url: http://eprints.whiterose.ac.uk/83574/
+
+See paper for notes
+- Refs:
+    - Data-driven models cancomplement and sometimes replace deterministic models
+
+## Backward
+- Kalman Filtering of Hydraulic Measurements for Burst Detection in Water Distribution Systems
+    - url: https://ascelibrary.org/doi/10.1061/%28ASCE%29PS.1949-1204.0000070
+
+## Forward
+- no new
+
+#### Pattern matching and associative artificial neural networks for water distribution system time series data analysis
+- url: https://iwaponline.com/jh/article/16/3/617/3080/Pattern-matching-and-associative-artificial-neural
+
+See paper for notes
+- Refs:
+    - No best anomaly detection per 2006, considers(control charting, time series analysis, kriging- and kalman filter techniques)
+    - Data-driven models cancomplement and sometimes replace deterministic models
+    - Summary of tested techniques
+    - Other pattern matching applications
+
+## Backward
+- no new
+
+## Forward
+- A review of data-driven approaches for burst detection in water distribution systems
+    - url: https://www.tandfonline.com/doi/abs/10.1080/1573062X.2017.1279191
