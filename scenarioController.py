@@ -191,8 +191,11 @@ def getDataset(
             dfLabel = sc.getLabels()
             numColumnsTarget = tools.numClasses
             target = torch.tensor(dfLabel["Label"].values, dtype=torch.float32)
-            target = target.view(-1, 1, numColumnsTarget)
-            target = torch.unsqueeze(target, 1)
+            if stepSize != 1 or sequenceSize != 1:
+                target = target.unfold(0, sequenceSize, stepSize)
+            else:
+                target = target.unsqueeze(0)
+            target = target.unsqueeze(2).unsqueeze(2)
 
             # Read the feature vectors
             if dataStructure == "c":
@@ -203,15 +206,15 @@ def getDataset(
                 inp = torch.tensor(
                     df.loc[:, df.columns.difference(
                         ["Label", "Timestamp"])].values, dtype=torch.float32)
-                inp = inp.view(-1, 1, numColumnsTensor)
-
                 if tools.normalizeInput:
-                    inp = tools.normalize(inp, p=1, dim=2)
+                    inp = tools.normalizeWindow(inp, sequenceSize)
 
                 if stepSize != 1 or sequenceSize != 1:
                     inp = inp.unfold(0, sequenceSize, stepSize)
                 else:
                     inp = inp.unsqueeze(1)
+
+                inp = inp.transpose(1, 2).unsqueeze(2)
 
             elif dataStructure == "s":
                 dfPressure = sc.getPressures(False)
@@ -228,11 +231,10 @@ def getDataset(
                 flowInp = torch.tensor(
                     dfFlow.loc[:, dfFlow.columns.difference(
                         ["Label", "Timestamp"])].values, dtype=torch.float32)
-                flowInp = flowInp.view(-1, 1, numFlowSensor)
 
                 if tools.normalizeInput:
-                    presInp = tools.normalize(presInp, p=1, dim=2)
-                    flowInp = tools.normalize(flowInp, p=1, dim=2)
+                    presInp = tools.normalizeWindow(presInp, sequenceSize)
+                    flowInp = tools.normalizeWindow(flowInp, sequenceSize)
 
                 if stepSize != 1 or sequenceSize != 1:
                     presInp = presInp.unfold(0, sequenceSize, stepSize)
@@ -240,6 +242,9 @@ def getDataset(
                 else:
                     presInp = torch.unsqueeze(presInp, 1)
                     flowInp = torch.unsqueeze(flowInp, 1)
+
+                presInp = presInp.transpose(1, 2).unsqueeze(2)
+                flowInp = flowInp.transpose(1, 2).unsqueeze(2)
 
                 inp = [(torch.tensor(pres), torch.tensor(flow)) for pres, flow in zip(presInp.tolist(), flowInp.tolist())]
 

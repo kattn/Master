@@ -12,8 +12,8 @@ numClasses = 1
 normalizeInput = True
 days150ShortLeaks = [3, 5, 8, 9, 12, 16, 18, 21, 22, 25, 26, 29, 31, 34, 35, 38]
 scenarios = []
-numScenarios = 10  # used if no specific scenarios are given
-percentTestScenarios = 0.25
+numScenarios = 5  # used if no specific scenarios are given
+percentTestScenarios = 0
 network = "Net1"
 scenariosFolder = "NetworkModels/Benchmarks/" + network + "/"
 inpFile = "NetworkModels/networks/" + network + ".inp"
@@ -35,15 +35,14 @@ def readCVSFolder(path):
 
 
 def normalizeWindow(tensor, windowSize):
-    """Normalizes each line based on the max within a given window size
-    and removes the beginning and trailing data that is outside a full
-    size window"""
-    for i in range(windowSize, tensor.shape[0]-windowSize):
-        tensor[i, :, :] = torch.div(
-            tensor[i, :, :],
-            (max(1e-12, tensor[i-windowSize:i+windowSize, :, :].abs().max())))
-
-    return tensor[windowSize:tensor.shape[0]-windowSize, :, :]
+    """Normalizes values of the tensor between 0 and 1 along dimention 0 based
+    on the max within the previous windowSized data using padding on the
+    beginnning"""
+    for i in range(1, tensor.shape[0]):
+        tensor[i-1:i, :].div_(
+            max(1e-12, tensor[max(0, i-windowSize):i, :].abs().max())
+            ).abs_()
+    return tensor
 
 
 def drawWDN(inpFile):

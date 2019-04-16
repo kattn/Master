@@ -61,19 +61,18 @@ class Trainer():
         plt.ioff()
         plt.show()
 
-    def trainModule(self, trainingSets):
+    def trainModule(self, data):
         self.module.train()
-        for trainingSet, targetSet, scenario in trainingSets:
+        for trainingSet, targetSet, scenario in data:
             accumulatedLoss = []
-            for tensor, target in zip(trainingSet, targetSet):
-                if hasattr(self.module, 'init_hidden'):
-                    self.module.init_hidden()
-                self.optimizer.zero_grad()
+            if hasattr(self.module, 'init_hidden'):
+                self.module.init_hidden()
 
-                if hasattr(self.module, 'init_hidden'):
-                    output, _ = self.module(tensor.transpose(0, 1))
-                else:
-                    output, _ = self.module(tensor)
+            prevTime = 0
+            for tensor, target in zip(trainingSet, targetSet):
+                self.module.zero_grad()
+
+                output = self.module(tensor)
 
                 loss = self.lossFunction(output, target)
                 loss.backward(retain_graph=True)
@@ -89,19 +88,17 @@ class Trainer():
 
         self.module.eval()  # So the module is defaultly in eval mode
 
-    def testModule(self, testSets):
+    def testModule(self, data):
         self.module.eval()
-        for testSet, targetSet, scenario in testSets:
+        for testSet, targetSet, scenario in data:
             accumulatedLoss = []
+            if hasattr(self.module, 'init_hidden'):
+                self.module.init_hidden()
+
             for tensor, target in zip(testSet, targetSet):
-                if hasattr(self.module, 'init_hidden'):
-                    self.module.init_hidden()
                 self.module.zero_grad()
 
-                if hasattr(self.module, 'init_hidden'):
-                    output, _ = self.module(tensor.transpose(0, 1))
-                else:
-                    output, _ = self.module(tensor)
+                output = self.module(tensor)
 
                 accumulatedLoss.append(
                     torch.sum(torch.abs(output - target)).item()

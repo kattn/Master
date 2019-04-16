@@ -7,6 +7,7 @@ import scenarioController
 import tools
 from models.trainer import Trainer
 from models.singleLSTM.singleLSTM import SingleLSTM
+from models.singleGRU.singleGRU import SingleGRU
 from models.dualLSTM.dualLSTM import DualLSTM
 from models.cnnGRU.cnnGRU import CNNGRU
 from models.cnn.cnn import CNN
@@ -16,7 +17,7 @@ trainingSet, testSet = scenarioController.getDataset(
     pathToScenarios=tools.scenariosFolder,
     dataStructure="c",
     percentTestScenarios=tools.percentTestScenarios,
-    sequenceSize=24,
+    sequenceSize=36,
     stepSize=1
     )
 
@@ -25,7 +26,9 @@ print("Trainset size:", len(trainingSet), "Testset size:", len(testSet))
 print("Trainging on", [x[2] for x in trainingSet])
 print("Testing on", [x[2] for x in testSet])
 
-module = SingleLSTM()
+testTens = trainingSet[0][0]
+
+module = SingleGRU()
 trainer = Trainer(
     module=module,
     optimizer=module.optimizer,
