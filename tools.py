@@ -12,8 +12,8 @@ numClasses = 1
 normalizeInput = True
 days150ShortLeaks = [3, 5, 8, 9, 12, 16, 18, 21, 22, 25, 26, 29, 31, 34, 35, 38]
 scenarios = []
-numScenarios = 50  # used if no specific scenarios are given
-percentTestScenarios = 0.5
+numScenarios = 10  # used if no specific scenarios are given
+percentTestScenarios = 0.25
 network = "Net1"
 scenariosFolder = "NetworkModels/Benchmarks/" + network + "/"
 inpFile = "NetworkModels/networks/" + network + ".inp"
@@ -76,4 +76,4 @@ def getNumSensors(sensorType):
         raise Exception("Invalid sensorType " + sensorType)
 
 if __name__ == "__main__":
-    drawWDN(tools.inpFile)
+    drawWDN(inpFile)
