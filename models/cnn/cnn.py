@@ -8,9 +8,10 @@ import tools
 
 torch.manual_seed(1)
 
-kernelSize = 5
-
-inpSize = tools.getNumSensors("t") - (kernelSize-1)*2
+kernelSize = 6
+presChannels = tools.getNumSensors("p")
+flowChannels = tools.getNumSensors("f")
+outChannels = 1
 dropout = 0.1
 
 outputFunction = nn.Sigmoid()
@@ -21,51 +22,49 @@ class CNN(nn.Module):
     lossFunction = nn.BCELoss()
     optimizer = optim.Adam
 
-    numEpochs = 10
+    numEpochs = 20
 
     def __init__(self):
         super(CNN, self).__init__()
-        self.hidden = self.init_hidden()
         self.output = outputFunction
         self.presCNN = nn.Sequential(
             nn.Conv1d(
-                in_channels=1, out_channels=1,
+                in_channels=presChannels, out_channels=presChannels,
+                kernel_size=kernelSize),
+            nn.ReLU(),
+            nn.Conv1d(
+                in_channels=presChannels, out_channels=outChannels,
                 kernel_size=kernelSize),
             nn.ReLU()
         )
         self.flowCNN = nn.Sequential(
             nn.Conv1d(
-                in_channels=1, out_channels=1,
+                in_channels=flowChannels, out_channels=flowChannels,
+                kernel_size=kernelSize),
+            nn.ReLU(),
+            nn.Conv1d(
+                in_channels=flowChannels, out_channels=outChannels,
                 kernel_size=kernelSize),
             nn.ReLU()
         )
-        self.gru = nn.GRU(
-            input_size=inpSize, hidden_size=hiddenSize,
-            num_layers=numLayers, bidirectional=bidirectional)
         self.decoder = nn.Linear(
-            hiddenSize*(bidirectional+1), tools.numClasses)
+            # outChannels*2,
+            28,
+            tools.numClasses)
 
         self.modelPath = __file__.replace(os.getcwd(), "")[1:-3] + ".pt"
-
-    def init_hidden(self, hidden=None):
-        if hidden:
-            self.hidden = hidden
-        else:
-            self.hidden = torch.zeros(
-                    numLayers*(bidirectional+1), 1, hiddenSize)
-
-        return self.hidden
 
     def forward(self, inp):
         presInp = inp[0]
         flowInp = inp[1]
+        # print(presInp.shape)
+        # print(flowInp.shape)
 
         presOut = self.presCNN(presInp)
         flowOut = self.flowCNN(flowInp)
 
-        gruInp = torch.cat((presOut, flowOut), 2)
+        cnnOutputs = torch.cat((presOut, flowOut), 2)
 
-        output, self.hidden = self.gru(gruInp, self.hidden)
-        output = self.decoder(output)
+        output = self.decoder(cnnOutputs)
         output = self.output(output)
-        return output, self.hidden
+        return output, None
