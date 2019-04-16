@@ -264,5 +264,5 @@ def getDataset(
 # testing
 if __name__ == "__main__":
     sc = ScenarioController(
-        "NetworkModels/Benchmarks/Net1/Scenario-91", readPressures=False)
+        "NetworkModels/Benchmarks/Net1/Scenario-2", readPressures=False)
     sc.plotTimeInterval("2017-01-01 00:00:00", "2017-01-28 10:45:00")
