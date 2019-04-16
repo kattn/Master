@@ -6,173 +6,167 @@ import numpy as np
 import pickle
 import os
 import shutil
-#import csv
 import pandas
 import time
-#import sys
 import matplotlib.pylab as plt
 
 benchmark = os.getcwd()+'/Benchmarks/'
 try:
-   os.makedirs(benchmark)
+    os.makedirs(benchmark)
 except:
-   pass 
+    pass
 
-# demand-driven (DD) or pressure dependent demand (PDD) 
-Mode_Simulation = 'PDD'#'PDD'
+# demand-driven (DD) or pressure dependent demand (PDD)
+Mode_Simulation = 'PDD'
 
 # Leak types
 leak_time_profile = ["abrupt", "incipient"]
 sim_step_minutes = 15
-
 
 # Set duration
 num_days = 30
 durationHours = 24*num_days
 timeStamp = pandas.date_range("2017-01-01 00:00", periods=durationHours*(60/sim_step_minutes), freq=str(sim_step_minutes)+"min")
 
-#timeStamp = pandas.date_range("2017-12-01 00:00", "2017-12-30 23:55", freq="24h")
-#timeStamp = pandas.date_range("00:00", "23:55", freq="5min")
-#timeStamp = pandas.date_range("2017-12-30 00:00", "2017-12-31 23:55", freq="24h")
+# timeStamp = pandas.date_range("2017-12-01 00:00", "2017-12-30 23:55", freq="24h")
+# timeStamp = pandas.date_range("00:00", "23:55", freq="5min")
+# timeStamp = pandas.date_range("2017-12-30 00:00", "2017-12-31 23:55", freq="24h")
 
 labelScenarios = []
 uncertainty_Topology = 'NO'
 INP = "Net1"
-  
+
 
 # RUN SCENARIOS
 def runScenarios(scNum):
-    
-    qunc = np.arange(0, 0.25 ,0.05)
-        
+
+    qunc = np.arange(0, 0.05, 0.05)
+
     # Path of EPANET Input File
-    #INPUT_FILES = ["Net1_CMH","Hanoi_CMH"]
-    #INPUT_FILES = ["Net1_CMH","Net2_CMH","Net3_CMH","Anytown_CMH","Hanoi_CMH","ky2_CMH","ky3_CMH"]
-    #for INP in INPUT_FILES:
+    # INPUT_FILES = ["Net1_CMH","Hanoi_CMH"]
+    # INPUT_FILES = ["Net1_CMH","Net2_CMH","Net3_CMH","Anytown_CMH","Hanoi_CMH","ky2_CMH","ky3_CMH"]
+    # for INP in INPUT_FILES:
     print(["Run input file: ", INP])
-    inp_file = 'networks/'+INP+'.inp'    
-    
+    inp_file = 'networks/'+INP+'.inp'
+
     print("Scenarios: "+str(scNum))
-    
+
     wn = wntr.network.WaterNetworkModel(inp_file)
     inp = os.path.basename(wn.name)[0:-4]
-    netName = benchmark+ inp#+'2'
+    netName = benchmark + inp  # +'2'
     # Create folder with network name
-    if scNum==1:
+    if scNum == 1:
         try:
             if os.path.exists(netName):
                 shutil.rmtree(netName)
             os.makedirs(netName)
             shutil.copyfile(inp_file, netName+'/'+os.path.basename(wn.name))
         except:
-            pass 
-    
-    ## Energy pattern remove
+            pass
+
+    # Energy pattern remove
     wn.options.energy.global_pattern = '""'
-    
+
     # Set time parameters
     wn.options.time.duration = durationHours*3600
     wn.options.time.hydraulic_timestep = 60*sim_step_minutes
     wn.options.time.quality_timestep = 0
     wn.options.time.report_timestep = 60*sim_step_minutes
     wn.options.time.pattern_timestep = 60*sim_step_minutes
-    
+
     results = {}
     # Set random seed
-    f=open('wn.pickle','wb')
-    pickle.dump(wn,f)
+    f = open('wn.pickle',  'wb')
+    pickle.dump(wn, f)
     f.close()
-    
+
     # Create fodler scenarios
     # Number of leaks at the same junction in day
     LEAK_LIST_TANK_JUNCTIONS = wn.junction_name_list+wn.tank_name_list
-    
-    nmLeaksNode = int(round(np.random.uniform(0,2)))
-    
-    qunc_index = int(round(np.random.uniform(len(qunc)-1)))
+
+    nmLeaksNode = int(round(np.random.uniform(0, 2)))
+
+    # qunc_index = int(round(np.random.uniform(len(qunc)-1)))
+    qunc_index = 0
     uncertainty_Length = qunc[qunc_index]
-    
-    qunc_index = int(round(np.random.uniform(len(qunc)-1)))
+
+    # qunc_index = int(round(np.random.uniform(len(qunc)-1)))
     uncertainty_Diameter = qunc[qunc_index]
-    
-    qunc_index = int(round(np.random.uniform(len(qunc)-1)))
+
+    # qunc_index = int(round(np.random.uniform(len(qunc)-1)))
     uncertainty_Roughness = qunc[qunc_index]
-    
-    qunc_index = int(round(np.random.uniform(len(qunc)-1)))
+
+    # qunc_index = int(round(np.random.uniform(len(qunc)-1)))
     uncertainty_base_demand = qunc[qunc_index]
-    
+
     # CREATE FOLDER EVERY SCENARIO-I
-    labels = np.zeros(len(timeStamp))#.astype(int)
+    labels = np.zeros(len(timeStamp))  # .astype(int)
     Sc = netName+'/Scenario-'+str(scNum)
     if os.path.exists(Sc):
         shutil.rmtree(Sc)
     os.makedirs(Sc)
-    
-    ###########################################################################  
-    ## SET BASE DEMANDS AND PATTERNS      
+
+    # SET BASE DEMANDS AND PATTERNS      
     # Remove all patterns
     #        # Initial base demands SET ALL EQUAL 1
-    #if "ky" in INP:
-    wn._patterns= {}
+    # if "ky" in INP:
+    wn._patterns = {}
     # tempbase_demand = wn.query_node_attribute('base_demand')
     tempbase_demand = wn.query_node_attribute('demand_timeseries_list')
     tempbase_demand = np.array([tempbase_demand[line].base_demand_list()[0] for line in tempbase_demand])
     # tmp = map(lambda x: x * uncertainty_base_demand, tempbase_demand)
     tmp = tempbase_demand * uncertainty_base_demand
-    ql=tempbase_demand-tmp
-    qu=tempbase_demand+tmp
-    mtempbase_demand=len(tempbase_demand)
-    qext_mtempbase_demand=ql+np.random.rand(mtempbase_demand)*(qu-ql)
-    
+    ql = tempbase_demand-tmp
+    qu = tempbase_demand+tmp
+    mtempbase_demand = len(tempbase_demand)
+    qext_mtempbase_demand = ql+np.random.rand(mtempbase_demand)*(qu-ql)
+
     for w, junction in enumerate(wn.junction_name_list):
         # wn.get_node(junction).base_demand = qext_mtempbase_demand[w] #wn.query_node_attribute('base_demand')
         pattern_name = 'P_'+junction
         patts = genDem()
         wn.get_node(junction).demand_timeseries_list.clear()
-        wn.get_node(junction).demand_timeseries_list.append((qext_mtempbase_demand[w], pattern_name))
+        wn.get_node(junction).demand_timeseries_list.append(
+            (qext_mtempbase_demand[w], pattern_name))
         wn.add_pattern(pattern_name, patts)
         # wn.get_node(junction).demand_pattern_name = pattern_name
-    
-    ###########################################################################
-    ## SET UNCERTAINTY PARAMETER
+
+    # SET UNCERTAINTY PARAMETER
     # Uncertainty Length
     tempLengths = wn.query_link_attribute('length')
     tempLengths = np.array([tempLengths[line] for line in tempLengths])
     # tmp = map(lambda x: x * uncertainty_Length, tempLengths)
     tmp = tempLengths * uncertainty_Length
-    ql=tempLengths-tmp
-    qu=tempLengths+tmp
-    mlength=len(tempLengths)
-    qext=ql+np.random.rand(mlength)*(qu-ql)
-        
+    ql = tempLengths-tmp
+    qu = tempLengths+tmp
+    mlength = len(tempLengths)
+    qext = ql + np.random.rand(mlength)*(qu-ql)
+
     # Uncertainty Diameter
     tempDiameters = wn.query_link_attribute('diameter')
     tempDiameters = np.array([tempDiameters[line] for line in tempDiameters])
     # tmp = map(lambda x: x * uncertainty_Diameter, tempDiameters)
     tmp = tempDiameters * uncertainty_Diameter
-    ql=tempDiameters-tmp
-    qu=tempDiameters+tmp
-    dem_diameter=len(tempDiameters)
-    diameters=ql+np.random.rand(dem_diameter)*(qu-ql)
-        
+    ql = tempDiameters-tmp
+    qu = tempDiameters+tmp
+    dem_diameter = len(tempDiameters)
+    diameters = ql+np.random.rand(dem_diameter)*(qu-ql)
+
     # Uncertainty Roughness
     tempRoughness = wn.query_link_attribute('roughness')
     tempRoughness = np.array([tempRoughness[line] for line in tempRoughness])
     # tmp = map(lambda x: x * uncertainty_Roughness, tempRoughness)
     tmp = tempRoughness * uncertainty_Roughness
-    ql=tempRoughness-tmp
-    qu=tempRoughness+tmp
-    dem_roughness=len(tempRoughness)
-    qextR=ql+np.random.rand(dem_roughness)*(qu-ql)
+    ql = tempRoughness-tmp
+    qu = tempRoughness+tmp
+    dem_roughness = len(tempRoughness)
+    qextR = ql+np.random.rand(dem_roughness)*(qu-ql)
     for w, line1 in enumerate(qextR):
-        wn.get_link(wn.link_name_list[w]).roughness=line1
-        wn.get_link(wn.link_name_list[w]).length=qext[w]
-        wn.get_link(wn.link_name_list[w]).diameter=diameters[w]
-        
-    ###########################################################################    
-    
-    ## ADD A LEAK NODE 
-    
+        wn.get_link(wn.link_name_list[w]).roughness = line1
+        wn.get_link(wn.link_name_list[w]).length = qext[w]
+        wn.get_link(wn.link_name_list[w]).diameter = diameters[w]
+
+    # ADD A LEAK NODE
     # Add leak node with 2 starttime end time
     leak_node = {}
     leak_diameter = {}
@@ -184,48 +178,46 @@ def runScenarios(scNum):
     leakEnds = {}
     leak_peak_time = {}
     i = int(round(np.random.uniform(wn.num_junctions+wn.num_tanks-1)))
-    
     for leak_i in range(nmLeaksNode):
-        
         i = int(round(np.random.uniform(wn.num_junctions+wn.num_tanks-1)))
         # Start Time of leak
         leak_node[leak_i] = wn.get_node(LEAK_LIST_TANK_JUNCTIONS[i])
-    
-        if leak_i>0:
+
+        if leak_i > 0:
             if leak_node[leak_i] == leak_node[leak_i-1]:
                 time_of_failure[leak_i] = int(np.round(np.random.uniform(time_of_failure[leak_i-1],len(timeStamp))))
             else:
                 time_of_failure[leak_i] = int(np.round(np.random.uniform(1,len(timeStamp))))
         else:
             time_of_failure[leak_i] = int(np.round(np.random.uniform(1,len(timeStamp))))
-    
+
         # End Time of leak
         end_of_failure[leak_i] = int(np.round(np.random.uniform(time_of_failure[leak_i],len(timeStamp))))
-        
-        
+
         # Labels for leak
-        labels[time_of_failure[leak_i]:end_of_failure[leak_i]]=1
+        labels[time_of_failure[leak_i]:end_of_failure[leak_i]] = 1
         leak_type[leak_i] = leak_time_profile[int(round(np.random.uniform(0,1)))]
         ST = time_of_failure[leak_i] 
         ET = end_of_failure[leak_i]
-        MT = int(np.round(np.random.uniform(ST+1,ET)))
+        MT = int(np.round(np.random.uniform(ST+1 ,ET)))
         if leak_type[leak_i] == 'incipient':
             maxHole = np.random.uniform(0.02, 0.2)
             increment = maxHole/(MT-ST) 
-            leak_step_increment = np.arange(0, maxHole , increment)
+            leak_step_increment = np.arange(0, maxHole, increment)
             leak_step = 0
             while leak_step < MT-ST:
-                step = leak_i#'Leak_'+str(leak_i)+'_step_'+str(leak_step)
+                step = leak_i  # 'Leak_'+str(leak_i)+'_step_'+str(leak_step)
                 leak_diameter[step] = leak_step_increment[leak_step]
-                leak_area[step]=3.14159*(leak_diameter[step]/2)**2 # na mpei sto leakArea excel file mono gia to maxHole
+                leak_area[step] = 3.14159*(leak_diameter[step]/2)**2 # na mpei sto leakArea excel file mono gia to maxHole
                 leak_node[step] = wn.get_node(LEAK_LIST_TANK_JUNCTIONS[i])
                 leak_start_time = (ST+leak_step)*sim_step_minutes*60
-                leak_end_time =  (ST+leak_step+1)*sim_step_minutes*60
-                leak_node[step]._leak_end_control_name=str(leak_i)+'end'+str(ST+leak_step)
+                leak_end_time = (ST+leak_step+1)*sim_step_minutes*60
+                leak_node[step]._leak_end_control_name = str(leak_i)+'end'+str(ST+leak_step)
                 leak_node[step]._leak_start_control_name = str(leak_i)+'start'+str(ST+leak_step)
-                leak_node[step].add_leak(wn, area = leak_area[step],
-                                  start_time = leak_start_time,
-                                  end_time = leak_end_time)
+                leak_node[step].add_leak(
+                    wn, area=leak_area[step],
+                    start_time=leak_start_time,
+                    end_time=leak_end_time)
         
                 leakStarts[step] = timeStamp[ST]
                 leakStarts[step] = leakStarts[step]._date_repr + ' ' +leakStarts[step]._time_repr
@@ -242,30 +234,29 @@ def runScenarios(scNum):
             leak_end_time = ET*sim_step_minutes*60
             leak_node[leak_i]._leak_end_control_name=str(leak_i)+'end'
             leak_node[leak_i]._leak_start_control_name = str(leak_i)+'start'
-            leak_node[leak_i].add_leak(wn, area = leak_area[leak_i],
-                              start_time = leak_start_time,
-                              end_time = leak_end_time)
-            #if leak_type[leak_i] == 'abrupt':
+            leak_node[leak_i].add_leak(
+                wn, area=leak_area[leak_i],
+                start_time=leak_start_time,
+                end_time=leak_end_time)
+            # if leak_type[leak_i] == 'abrupt':
             leakStarts[leak_i] = timeStamp[ST-1]
             leakStarts[leak_i] = leakStarts[leak_i]._date_repr + ' ' +leakStarts[leak_i]._time_repr
             leakEnds[leak_i] = timeStamp[ET-1]
             leakEnds[leak_i] = leakEnds[leak_i]._date_repr + ' ' +leakEnds[leak_i]._time_repr
             leak_peak_time[leak_i] = timeStamp[MT-1]._date_repr+' '+timeStamp[MT-1]._time_repr
 
-        
-    ## SAVE EPANET INPUT FILE 
+    # SAVE EPANET INPUT FILE 
     # Write inp file
     wn.write_inpfile(Sc+'/'+inp+'_Scenario-'+str(scNum)+'.inp')
-    
-    ## RUN SIMULATION WITH WNTR SIMULATOR
+
+    # RUN SIMULATION WITH WNTR SIMULATOR
     sim = wntr.sim.WNTRSimulator(wn, mode=Mode_Simulation)
     results = sim.run_sim()
-    # if ((all(results.node['pressure',:,:]> 0)) !=True)==True:
-    if ((all(results.node['pressure']> 0)) !=True)==True:
+    if ((all(results.node['pressure'] > 0)) is not True) is True:
         print("not run")
         scNum = scNum + 1
         return -1
-    #except:
+    # except:
     #    print 'error'
     #    return -1
         
