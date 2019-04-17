@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+import settings
 import tools
 
 torch.manual_seed(1)
@@ -33,7 +34,7 @@ class SingleGRU(nn.Module):
             num_layers=numLayers, bidirectional=bidirectional,
             dropout=dropout)
         self.decoder = nn.Linear(
-            hiddenSize*(bidirectional+1), tools.numClasses)
+            hiddenSize*(bidirectional+1), settings.numClasses)
 
         self.modelPath = __file__.replace(os.getcwd(), "")[1:-3] + ".pt"
 

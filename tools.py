@@ -1,5 +1,5 @@
-import pandas
 import torch
+import pandas
 from torch.nn.functional import normalize
 from os import scandir, listdir
 from natsort import natsorted
@@ -7,16 +7,7 @@ import matplotlib.pyplot as plt
 import random
 import wntr
 
-numClasses = 1
-
-normalizeInput = True
-days150ShortLeaks = [3, 5, 8, 9, 12, 16, 18, 21, 22, 25, 26, 29, 31, 34, 35, 38]
-scenarios = []
-numScenarios = 5  # used if no specific scenarios are given
-percentTestScenarios = 0
-network = "Net1"
-scenariosFolder = "NetworkModels/Benchmarks/" + network + "/"
-inpFile = "NetworkModels/networks/" + network + ".inp"
+import settings
 
 
 def readCVSFolder(path):
@@ -62,11 +53,11 @@ def getNumSensors(sensorType):
     """
 
     if sensorType == "f":
-        path = scenariosFolder + "Scenario-1/Flows"
+        path = settings.scenariosFolder + "Scenario-1/Flows"
         paths = [entry.path for entry in scandir(path) if entry.is_file]
         return len(paths)
     elif sensorType == "p":
-        path = scenariosFolder + "Scenario-1/Pressures"
+        path = settings.scenariosFolder + "Scenario-1/Pressures"
         paths = [entry.path for entry in scandir(path) if entry.is_file]
         return len(paths)
     elif sensorType == "t":

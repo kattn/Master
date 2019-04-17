@@ -5,6 +5,7 @@ import torch.nn as nn
 
 import scenarioController
 import tools
+import settings
 from models.trainer import Trainer
 from models.singleLSTM.singleLSTM import SingleLSTM
 from models.singleGRU.singleGRU import SingleGRU
@@ -14,14 +15,12 @@ from models.cnn.cnn import CNN
 
 dsTime = time.time()
 trainingSet, testSet = scenarioController.getDataset(
-    pathToScenarios=tools.scenariosFolder,
+    pathToScenarios=settings.scenariosFolder,
     dataStructure="c",
-    percentTestScenarios=tools.percentTestScenarios,
-    sequenceSize=1,
-    stepSize=1
+    percentTestScenarios=settings.percentTestScenarios,
+    sequenceSize=settings.sequenceSize,
+    stepSize=settings.stepSize
     )
-
-loadModel = True
 
 print("Dataset read in time", time.time() - dsTime)
 print("Trainset size:", len(trainingSet), "Testset size:", len(testSet))
@@ -33,7 +32,7 @@ print("Testing on", [x[2] for x in testSet])
 # print(trainTens.shape)
 
 module = SingleGRU()
-if loadModel:
+if settings.loadModel:
     module.load_state_dict(torch.load(module.modelPath))
 
 trainer = Trainer(
@@ -44,7 +43,7 @@ trainer = Trainer(
 
 trainer.printBenchmarks(testSet)
 
-if not loadModel:
+if not settings.loadModel:
     trainer.train(trainingSet, testSet, module.numEpochs)
     torch.save(module.state_dict(), module.modelPath)
     print("remember to rename model file if wanted")

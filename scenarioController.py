@@ -8,6 +8,7 @@ import matplotlib.ticker as ticker
 import random
 
 import tools
+import settings
 from os import scandir
 
 
@@ -162,11 +163,11 @@ def getDataset(
     data = []
 
     # Decide if specific scenarios or just a number of them
-    if len(tools.scenarios) != 0:
-        scenarios = ["Scenario-" + str(x) for x in tools.scenarios]
-        count = len(tools.scenarios)
+    if len(settings.scenarios) != 0:
+        scenarios = ["Scenario-" + str(x) for x in settings.scenarios]
+        count = len(settings.scenarios)
     else:
-        count = tools.numScenarios
+        count = settings.numScenarios
 
     # Ensure that sequenceSize and stepSize are valid values
     if sequenceSize < 1:
@@ -178,7 +179,7 @@ def getDataset(
         if dirEntry.is_dir():
 
             # Decide if specific scenarios or just a number of them
-            if len(tools.scenarios) != 0:
+            if len(settings.scenarios) != 0:
                 if dirEntry.path.split("/")[-1] not in scenarios:
                     continue
             else:
@@ -189,7 +190,7 @@ def getDataset(
 
             # Read the target vectors
             dfLabel = sc.getLabels()
-            numColumnsTarget = tools.numClasses
+            numColumnsTarget = settings.numClasses
             target = torch.tensor(dfLabel["Label"].values, dtype=torch.float32)
             if stepSize != 1 or sequenceSize != 1:
                 target = target.unfold(0, sequenceSize, stepSize)
@@ -206,7 +207,7 @@ def getDataset(
                 inp = torch.tensor(
                     df.loc[:, df.columns.difference(
                         ["Label", "Timestamp"])].values, dtype=torch.float32)
-                if tools.normalizeInput:
+                if settings.normalizeInput:
                     inp = tools.normalizeWindow(inp, sequenceSize)
 
                 if stepSize != 1 or sequenceSize != 1:
