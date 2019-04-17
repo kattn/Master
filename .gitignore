@@ -2,6 +2,10 @@
 data/*
 va.json
 .vscode/*
+NetworkModels/Benchmarks/*
+NetworkModels/wn.pickle
+*.pt
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
