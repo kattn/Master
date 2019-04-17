@@ -64,7 +64,7 @@ class Trainer():
     def trainModule(self, data):
         self.module.train()
         for trainingSet, targetSet, scenario in data:
-            accumulatedLoss = []
+            scenarioError = []
             if hasattr(self.module, 'init_hidden'):
                 self.module.init_hidden()
 
@@ -78,20 +78,24 @@ class Trainer():
                 loss.backward(retain_graph=True)
                 self.optimizer.step()
 
-                accumulatedLoss.append(loss.item())
+                scenarioError.append(
+                    torch.mean(torch.abs(output - target)).item()
+                )
 
             self.trainingDataPoints.append(
-               sum(accumulatedLoss)/len(accumulatedLoss))
+               sum(scenarioError)/len(scenarioError))
+
             print(
-                "Training", scenario, "loss",
-                self.trainingDataPoints[-1])
+                "Training", scenario,
+                "Accuracy", self.trainingDataPoints[-1]
+                )
 
         self.module.eval()  # So the module is defaultly in eval mode
 
     def testModule(self, data):
         self.module.eval()
         for testSet, targetSet, scenario in data:
-            accumulatedLoss = []
+            scenarioError = []
             if hasattr(self.module, 'init_hidden'):
                 self.module.init_hidden()
 
@@ -100,15 +104,63 @@ class Trainer():
 
                 output = self.module(tensor)
 
-                accumulatedLoss.append(
-                    torch.sum(torch.abs(output - target)).item()
+                scenarioError.append(
+                    torch.mean(torch.abs(output - target)).item()
                     )
 
             self.testDataPoints.append(
-                sum(accumulatedLoss)/len(accumulatedLoss))
+                sum(scenarioError)/len(scenarioError))
             print(
-                "Testing", scenario, "loss",
+                "Testing", scenario, "Accuracy",
                 self.testDataPoints[-1])
+
+    def printBenchmarks(self, data, ge=0.5):
+        """Takes a data input of tensors and targets. ge is the value that is
+        used to treshold the output to 1 and 0.
+        Returns TPR, FPR and accuracy for each data"""
+        self.module.eval()
+        for tensors, targets, scenario in data:
+            tp = 0
+            fp = 0
+            tn = 0
+            p = 0
+            n = 0
+            for tensor, target in zip(tensors, targets):
+                output = self.module(tensor).ge(ge)
+                # uses ge to create a binary output vector
+
+                for x, y in zip(output.squeeze(), target.squeeze()):
+                    x = int(x)
+                    y = int(y)
+
+                    if y == 1:
+                        p += 1
+                    else:
+                        n += 1
+
+                    if x == y == 1:
+                        tp += 1
+                    if x == 1 and y == 0:
+                        fp += 1
+                    if x == y == 0:
+                        tn += 1
+
+            acc = (tp+tn)/(p+n)
+            if p == 0:
+                tpr = "-"
+            else:
+                tpr = tp/p
+            if n == 0:
+                fpr = "-"
+            else:
+                fpr = fp/n
+
+            print(
+                scenario,
+                "Accuracy", acc,
+                "TPR", tpr,
+                "FPR", fpr,
+                "p", p)
 
     def printTrainingTime(self, identifier):
         """Prints how long the module has been training, with a given
