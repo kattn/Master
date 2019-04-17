@@ -210,11 +210,11 @@ def getDataset(
                     inp = tools.normalizeWindow(inp, sequenceSize)
 
                 if stepSize != 1 or sequenceSize != 1:
-                    inp = inp.unfold(0, sequenceSize, stepSize)
+                    inp = inp.unfold(0, sequenceSize, stepSize).transpose(1, 2)
                 else:
-                    inp = inp.unsqueeze(1)
+                    inp = inp.unsqueeze(0)
 
-                inp = inp.transpose(1, 2).unsqueeze(2)
+                inp = inp.unsqueeze(2)
 
             elif dataStructure == "s":
                 dfPressure = sc.getPressures(False)
