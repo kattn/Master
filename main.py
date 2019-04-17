@@ -17,25 +17,34 @@ trainingSet, testSet = scenarioController.getDataset(
     pathToScenarios=tools.scenariosFolder,
     dataStructure="c",
     percentTestScenarios=tools.percentTestScenarios,
-    sequenceSize=36,
+    sequenceSize=1,
     stepSize=1
     )
+
+loadModel = True
 
 print("Dataset read in time", time.time() - dsTime)
 print("Trainset size:", len(trainingSet), "Testset size:", len(testSet))
 print("Trainging on", [x[2] for x in trainingSet])
 print("Testing on", [x[2] for x in testSet])
 
-testTens = trainingSet[0][0]
+# trainTens = trainingSet[0][0]
+# testTens = trainingSet[0][1]
+# print(trainTens.shape)
 
 module = SingleGRU()
+if loadModel:
+    module.load_state_dict(torch.load(module.modelPath))
+
 trainer = Trainer(
     module=module,
     optimizer=module.optimizer,
     learningRate=module.lr,
     lossFunction=module.lossFunction)
 
-trainer.train(trainingSet, testSet, module.numEpochs)
+trainer.printBenchmarks(testSet)
 
-torch.save(module.state_dict(), module.modelPath)
-print("remember to rename model file if wanted")
+if not loadModel:
+    trainer.train(trainingSet, testSet, module.numEpochs)
+    torch.save(module.state_dict(), module.modelPath)
+    print("remember to rename model file if wanted")
