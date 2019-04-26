@@ -233,7 +233,7 @@ def getDataset(
                     dfFlow.loc[:, dfFlow.columns.difference(
                         ["Label", "Timestamp"])].values, dtype=torch.float32)
 
-                if tools.normalizeInput:
+                if settings.normalizeInput:
                     presInp = tools.normalizeWindow(presInp, sequenceSize)
                     flowInp = tools.normalizeWindow(flowInp, sequenceSize)
 
