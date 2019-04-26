@@ -2,6 +2,8 @@ import time
 import matplotlib.pyplot as plt
 import torch
 
+from benchmark import Benchmark
+
 
 class Trainer():
     """
@@ -22,6 +24,8 @@ class Trainer():
         self.testDataPoints = []
 
         self.currentlyTraining = False
+
+        self.benchmarks = {}
 
         plt.ion()
         self.fig, (self.trainingAxis, self.testAxis) = plt.subplots(2, 1)
@@ -119,48 +123,50 @@ class Trainer():
         used to treshold the output to 1 and 0.
         Returns TPR, FPR and accuracy for each data"""
         self.module.eval()
+
+        print("Name" + "\t\t" + "Leak" + "\t" + "TPR" + "\t" + "FPR" + "\t" + "Accuracy")
         for tensors, targets, scenario in data:
-            tp = 0
-            fp = 0
-            tn = 0
-            p = 0
-            n = 0
+            bench = Benchmark()
+
+            for tensor, target in zip(tensors, targets):
+                output = self.module(tensor).ge(ge)
+                # uses ge to create a binary output vector
+                bench += Benchmark(
+                    output.squeeze(), target.squeeze())
+
+            if bench.p != 0:
+                leak = "yes"
+            else:
+                leak = "no"
+            print(
+                f"{scenario:13}\t{leak}\t{bench.getTPR():.3f}\t{bench.getFPR():.3f}\t{bench.getAccuracy():.3f}"
+            )
+            self.benchmarks[scenario] = bench
+
+    def storeBenchmarks(self, path):
+        with open(path, 'w+') as f:
+            f.write("Name" + "\t\t\t" + "Leak" + "\t" + "TPR" + "\t\t" + "FPR" + "\t\t" + "Accuracy" + "\n")
+            for scenario in sorted(self.benchmarks.keys()):
+                bench = self.benchmarks[scenario]
+                if bench.p != 0:
+                    leak = "yes"
+                else:
+                    leak = "no"
+                f.write(f"{scenario:13}\t{leak}\t\t{bench.getTPR():.3f}\t{bench.getFPR():.3f}\t{bench.getAccuracy():.3f}\n")
+
+    def storePrediction(self, scenario, path, ge=0.5):
+        self.module.eval()
+        (tensors, targets, scenario) = scenario
+
+        with open(path, 'w+') as f:
+            f.write("Pred \t target\n")
             for tensor, target in zip(tensors, targets):
                 output = self.module(tensor).ge(ge)
                 # uses ge to create a binary output vector
 
                 for x, y in zip(output.squeeze(), target.squeeze()):
-                    x = int(x)
-                    y = int(y)
-
-                    if y == 1:
-                        p += 1
-                    else:
-                        n += 1
-
-                    if x == y == 1:
-                        tp += 1
-                    if x == 1 and y == 0:
-                        fp += 1
-                    if x == y == 0:
-                        tn += 1
-
-            acc = (tp+tn)/(p+n)
-            if p == 0:
-                tpr = "-"
-            else:
-                tpr = tp/p
-            if n == 0:
-                fpr = "-"
-            else:
-                fpr = fp/n
-
-            print(
-                scenario,
-                "Accuracy", acc,
-                "TPR", tpr,
-                "FPR", fpr,
-                "p", p)
+                    line = str(x.item()) + "\t" + str(y.item()) + "\n"
+                    f.write(line)
 
     def printTrainingTime(self, identifier):
         """Prints how long the module has been training, with a given

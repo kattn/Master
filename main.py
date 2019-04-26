@@ -27,13 +27,9 @@ print("Trainset size:", len(trainingSet), "Testset size:", len(testSet))
 print("Trainging on", [x[2] for x in trainingSet])
 print("Testing on", [x[2] for x in testSet])
 
-# trainTens = trainingSet[0][0]
-# testTens = trainingSet[0][1]
-# print(trainTens.shape)
-
 module = SingleGRU()
 if settings.loadModel:
-    module.load_state_dict(torch.load(module.modelPath))
+    module.load_state_dict(torch.load(settings.modelPath))
 
 trainer = Trainer(
     module=module,
@@ -41,9 +37,11 @@ trainer = Trainer(
     learningRate=module.lr,
     lossFunction=module.lossFunction)
 
-trainer.printBenchmarks(testSet)
-
 if not settings.loadModel:
     trainer.train(trainingSet, testSet, module.numEpochs)
     torch.save(module.state_dict(), module.modelPath)
     print("remember to rename model file if wanted")
+
+trainer.printBenchmarks(testSet)
+# trainer.storePrediction(trainingSet[0], "test.txt")
+trainer.storeBenchmarks("benchmarks.txt")
