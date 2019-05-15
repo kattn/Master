@@ -3,16 +3,25 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import math
 
 import tools
+import settings
+
 
 torch.manual_seed(1)
 
 kernelSize = 6
 presChannels = tools.getNumSensors("p")
-flowChannels = tools.getNumSensors("f")
-outChannels = 1
+outChannels = 3
+padding = 0
+dilation = 1
+stride = 1
+convLin = settings.sequenceSize
+convLout = math.floor((convLin + 2 * padding - dilation * (kernelSize-1) - 1)/stride + 1)
+decoderInputSize = math.floor((convLout + 2 * padding - dilation * (kernelSize-1) - 1)/stride + 1)*outChannels
 dropout = 0.1
+
 
 outputFunction = nn.Sigmoid()
 
@@ -22,49 +31,33 @@ class CNN(nn.Module):
     lossFunction = nn.BCELoss()
     optimizer = optim.Adam
 
-    numEpochs = 20
+    numEpochs = 1
 
     def __init__(self):
         super(CNN, self).__init__()
         self.output = outputFunction
         self.presCNN = nn.Sequential(
             nn.Conv1d(
-                in_channels=presChannels, out_channels=presChannels,
-                kernel_size=kernelSize),
-            nn.ReLU(),
-            nn.Conv1d(
                 in_channels=presChannels, out_channels=outChannels,
-                kernel_size=kernelSize),
-            nn.ReLU()
-        )
-        self.flowCNN = nn.Sequential(
-            nn.Conv1d(
-                in_channels=flowChannels, out_channels=flowChannels,
-                kernel_size=kernelSize),
+                kernel_size=kernelSize, stride=stride, padding=padding,
+                dilation=dilation),
             nn.ReLU(),
-            nn.Conv1d(
-                in_channels=flowChannels, out_channels=outChannels,
-                kernel_size=kernelSize),
-            nn.ReLU()
+            nn.MaxPool1d(kernelSize, stride=stride),
         )
         self.decoder = nn.Linear(
-            # outChannels*2,
-            28,
-            tools.numClasses)
+            decoderInputSize,
+            settings.numClasses)
 
         self.modelPath = __file__.replace(os.getcwd(), "")[1:-3] + ".pt"
 
     def forward(self, inp):
-        presInp = inp[0]
-        flowInp = inp[1]
-        # print(presInp.shape)
-        # print(flowInp.shape)
+        presInp = inp[0].transpose(1, 2).transpose(0, 2)
+        flowInp = inp[1].transpose(1, 2).transpose(0, 2)
 
-        presOut = self.presCNN(presInp)
-        flowOut = self.flowCNN(flowInp)
+        output = self.presCNN(presInp)
+        output = output.view(-1, 1, decoderInputSize)
 
-        cnnOutputs = torch.cat((presOut, flowOut), 2)
-
-        output = self.decoder(cnnOutputs)
+        output = self.decoder(output)
         output = self.output(output)
-        return output, None
+
+        return output

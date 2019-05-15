@@ -34,7 +34,7 @@ timeStamp = pandas.date_range("2017-01-01 00:00", periods=durationHours*(60/sim_
 
 labelScenarios = []
 uncertainty_Topology = 'NO'
-INP = "Net1"
+INP = "Hanoi_CMH"
 
 
 # RUN SCENARIOS
@@ -197,18 +197,18 @@ def runScenarios(scNum):
         # Labels for leak
         labels[time_of_failure[leak_i]:end_of_failure[leak_i]] = 1
         leak_type[leak_i] = leak_time_profile[int(round(np.random.uniform(0,1)))]
-        ST = time_of_failure[leak_i] 
-        ET = end_of_failure[leak_i]
-        MT = int(np.round(np.random.uniform(ST+1 ,ET)))
+        ST = time_of_failure[leak_i]  # start time
+        ET = end_of_failure[leak_i]  # end time
+        MT = int(np.round(np.random.uniform(ST+1, ET)))  # Peak time
         if leak_type[leak_i] == 'incipient':
             maxHole = np.random.uniform(0.02, 0.2)
-            increment = maxHole/(MT-ST) 
+            increment = maxHole/(MT-ST)
             leak_step_increment = np.arange(0, maxHole, increment)
             leak_step = 0
-            while leak_step < MT-ST:
-                step = leak_i  # 'Leak_'+str(leak_i)+'_step_'+str(leak_step)
+            while leak_step < MT-ST:  # up untill leak peak time
+                step = leak_i
                 leak_diameter[step] = leak_step_increment[leak_step]
-                leak_area[step] = 3.14159*(leak_diameter[step]/2)**2 # na mpei sto leakArea excel file mono gia to maxHole
+                leak_area[step] = 3.14159*(leak_diameter[step]/2)**2
                 leak_node[step] = wn.get_node(LEAK_LIST_TANK_JUNCTIONS[i])
                 leak_start_time = (ST+leak_step)*sim_step_minutes*60
                 leak_end_time = (ST+leak_step+1)*sim_step_minutes*60
@@ -226,6 +226,25 @@ def runScenarios(scNum):
                 leak_peak_time[leak_i] = timeStamp[MT-1]._date_repr+' '+timeStamp[MT-1]._time_repr
 
                 leak_step = leak_step + 1
+            # Continue leak untill end time
+            leak_diameter[leak_i] = leak_step_increment[-1]
+            leak_area[leak_i]=3.14159*(leak_diameter[leak_i]/2)**2
+            leak_start_time = MT*sim_step_minutes*60
+            leak_end_time = ET*sim_step_minutes*60
+            leak_node[leak_i]._leak_end_control_name=str(leak_i)+'end'
+            leak_node[leak_i]._leak_start_control_name = str(leak_i)+'start'
+            leak_node[leak_i].add_leak(
+                wn, area=leak_area[leak_i],
+                discharge_coeff=1,
+                start_time=leak_start_time,
+                end_time=leak_end_time)
+            # if leak_type[leak_i] == 'abrupt':
+            leakStarts[leak_i] = timeStamp[ST-1]
+            leakStarts[leak_i] = leakStarts[leak_i]._date_repr + ' ' +leakStarts[leak_i]._time_repr
+            leakEnds[leak_i] = timeStamp[ET-1]
+            leakEnds[leak_i] = leakEnds[leak_i]._date_repr + ' ' +leakEnds[leak_i]._time_repr
+            leak_peak_time[leak_i] = timeStamp[MT-1]._date_repr+' '+timeStamp[MT-1]._time_repr
+
         else:     # abrupt  
             MT = ET
             leak_diameter[leak_i] = np.random.uniform(0.02, 0.2)
@@ -376,11 +395,11 @@ if __name__ == '__main__':
 
     t = time.time()
     
-    NumScenarios = 200
+    NumScenarios = 50
     scArray = range(1, NumScenarios+1)
     
     numCores = multiprocessing.cpu_count()
-    p = multiprocessing.Pool(4)
+    p = multiprocessing.Pool(1)
     p.map(runScenarios, range(1,NumScenarios+1))
     p.close()
     p.join()

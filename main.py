@@ -16,7 +16,7 @@ from models.cnn.cnn import CNN
 dsTime = time.time()
 trainingSet, testSet = scenarioController.getDataset(
     pathToScenarios=settings.scenariosFolder,
-    dataStructure="c",
+    dataStructure="s",
     percentTestScenarios=settings.percentTestScenarios,
     sequenceSize=settings.sequenceSize,
     stepSize=settings.stepSize
@@ -43,5 +43,12 @@ if not settings.loadModel:
     print("remember to rename model file if wanted")
 
 trainer.printBenchmarks(testSet)
-# trainer.storePrediction(trainingSet[0], "test.txt")
-trainer.storeBenchmarks("benchmarks.txt")
+trainer.storeBenchmarks("benchmarks" + module.modelPath[:-3] + ".txt")
+print("possible scenarios to store:")
+scenarios = [x[2] for x in (trainingSet+testSet)]
+print(scenarios)
+scen = input("which scenario should be stored?")
+while ("Scenario-"+scen) not in scenarios:
+    scen = input("which scenario should be stored?")
+scenarioToBeStored = [x for x in (trainingSet+testSet) if x[2] == "Scenario-" + scen][0]
+trainer.storePrediction(scenarioToBeStored, "prediction.txt")

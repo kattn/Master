@@ -14,12 +14,12 @@ def readCVSFolder(path):
     csvs = [entry.path for entry in scandir(path) if entry.is_file]
     csvs = natsorted(csvs)
 
-    df = pandas.read_csv(csvs[0], names=["Timestamp", "Node_0"], header=0)
+    df = pandas.read_csv(csvs[0], names=["Timestamp", csvs[0].split("/")[-1][:-4]], header=0)
     for index, csv in enumerate(csvs[1:], 1):
         df = df.merge(
             pandas.read_csv(
                 csv,
-                names=["Timestamp", "Node_"+str(index)],
+                names=["Timestamp", csv.split("/")[-1][:-4]],
                 header=0),
             on="Timestamp")
     return df
@@ -65,5 +65,22 @@ def getNumSensors(sensorType):
     else:
         raise Exception("Invalid sensorType " + sensorType)
 
+
+def storeInputOutputValues(inp, output, path="ioExample.txt", format="asci"):
+    """Stores input and output tensors in specified format to file specified
+    by path"""
+
+    with open(path, "w+") as f:
+        timesteps = inp.squeeze().t().tolist()
+        output = [round(x, 3) for x in output.squeeze().tolist()]
+
+        for sensors in timesteps:
+            sens = [round(x, 3) for x in sensors]
+            f.write(str(sens) + "\n")
+        f.write(str(output) + "\n")
+
+
 if __name__ == "__main__":
-    drawWDN(inpFile)
+    drawWDN("NetworkModels/networks/Net1.inp")
+    drawWDN("NetworkModels/networks/Net3.inp")
+    drawWDN("NetworkModels/networks/Hanoi_CMH.inp")

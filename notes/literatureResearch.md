@@ -308,19 +308,19 @@ url: https://ieeexplore.ieee.org/document/6265794
 - Also look at multiple leak detection
 - get better detection with added noise
 
-### Model-based leak detection and location in water distribution networks considering an extended-horizon analysis of pressure sensitivities
+## Model-based leak detection and location in water distribution networks considering an extended-horizon analysis of pressure sensitivities
 url: https://iwaponline.com/jh/article/16/3/649/3082/Model-based-leak-detection-and-location-in-water?searchresult=1
 
-## Context:
+#### Context:
 - 5 different model-based leak detection methods are presented and compared
 - Also very good overview of the state of the art
 
-## Goal/Motivation:
+#### Goal/Motivation:
 - New model-based method compared with 5 others
 
-## Related work:
+#### Related work:
 
-## Methodology:
+#### Methodology:
 - Model-based leak detection method using sensitivity matrices and residues
 - Binarized sensitivity method:
     1. Binirize sensitivity matrix using a threshold
@@ -348,7 +348,7 @@ url: https://iwaponline.com/jh/article/16/3/649/3082/Model-based-leak-detection-
     1. Oposite of the other solutions, it calcualtes the most appropriate leak size first by optimizing a least square equation found in the paper
     2. Then the leak node is the one with the mininal index
 
-## Summary:
+#### Summary:
 - Bin. method is weak because the threshold is hard to set
 - For Euclidean dist the problem is noise and demand patterns
 - Cosine dist and least square opt is the best
@@ -357,22 +357,22 @@ url: https://iwaponline.com/jh/article/16/3/649/3082/Model-based-leak-detection-
     - Optimization method: 81% and 89% detection with 2m, not as good as angle methods, but gives an approx of the leak size, with is nice
     - Correlation, not as accurate as the others.
 
-### Leakage fault detection in district metered areas of water distribution systems
+## Leakage fault detection in district metered areas of water distribution systems
 url: https://iwaponline.com/jh/article/14/4/992/3203/Leakage-fault-detection-in-district-metered-areas
 
-## Context:
+#### Context:
 - Analyse the inflow to a DMA and learn the weekly periodic DMA inflow dynamic, i.e. a model based approach
 - Currently uses Night flow analysis(NFA), this is prone to not detect slowly increasing leaks(would be viewed as demand)
 - Problem with model based: may not have well calibrated models, as well as representative consumer demand models
 - Transiant analysis requires high freq. sampling
 
-## Goal/Motivation:
+#### Goal/Motivation:
 - Model based
 
-## Related work:
+#### Related work:
 - Savic et al. (2009) - disadvantages with transient analysis
 
-## Methodology:
+#### Methodology:
 - Presented method:
     - Update coefs of fourier series to reprisent demand changes. The offset term is used to id leaks. Found to be good at detecting small leaks
 - Split the signal into 2; The longterm signal(yearly, ignored in this paper) and the shortterm(weekly)
@@ -395,7 +395,7 @@ url: https://iwaponline.com/jh/article/14/4/992/3203/Leakage-fault-detection-in-
     - Has worse accuricy, but quickers detection
     - Adaptive learning isn't affected by leakages that isn't detected within the time window(but can still only detect new leakages) 
 
-## Summary:
+#### Summary:
 - Current solution; Measure at DMA inlets and outlets and detection using treshold or manual operator observation
 - Mentions the problems of summer and winter time
 - AI application in leak fault detection:
@@ -406,17 +406,17 @@ url: https://iwaponline.com/jh/article/14/4/992/3203/Leakage-fault-detection-in-
     - Kalman filters
 
 
-#### WHO, gives examples of damage from leakage
+## WHO, gives examples of damage from leakage
 url: https://apps.who.int/iris/bitstream/handle/10665/66893/WHO_SDE_WSH_01.1_eng.pdf?sequence=1
 
-#### Leak localization in water distribution networks using a mixed model-based/data-driven approach
+## Leak localization in water distribution networks using a mixed model-based/data-driven approach
 url: https://www.sciencedirect.com/science/article/pii/S0967066116301526
 
-## Context:
+#### Context:
 - Model-based/data-driven approach combined with k-nn classifier for leak localization
 - Works independently of the real leak magnitude(avoids problem with sensitivity matrices)
 
-## Methodology
+#### Methodology
 - Presents model for leak localization
     - Creates residues
     - Classifies into groups of nodes
@@ -425,7 +425,7 @@ url: https://www.sciencedirect.com/science/article/pii/S0967066116301526
     - Specifies the uncertainty added to the data set
     - uses 200 training and 50 test samples
 
-## Summary
+#### Summary
 - Leaks are a problem
 - Traditional appraoch is a passive one
 - Leak detection has problems with uncertaintis in the data
@@ -436,23 +436,23 @@ url: https://www.sciencedirect.com/science/article/pii/S0967066116301526
 - Longer time window(tests up to 24hours) gives better accuracy
 - Perez et al (2014) Nova Icària was real test, check to see if open data set
 
-## Backward
+#### Backward
 - no new
 
-## Forward
+#### Forward
 - Review of Current Technologies and Proposed Intelligent Methodologies for Water Distributed Network Leakage Detection
     - url: https://ieeexplore.ieee.org/document/8565861
 
 
-#### Novelty detection for time series data analysis in water distribution systems using support vector machines
+## Novelty detection for time series data analysis in water distribution systems using support vector machines
 url: https://iwaponline.com/jh/article/13/4/672/3111/Novelty-detection-for-time-series-data-analysis-in
 
 See paper for notes
 
-## Backward
+#### Backward
 - no new
 
-## Forward
+#### Forward
 - Pattern matching and associative artificial neural networks for water distribution system time series data analysis
     - url: https://iwaponline.com/jh/article/16/3/617/3080/Pattern-matching-and-associative-artificial-neural
 - A comparative study of artificial neural network architectures for time series prediction of water distribution system flow data
@@ -461,32 +461,32 @@ See paper for notes
     - url: file:///home/stud2109/Downloads/Machine_learning_approaches_for_anomaly_detection_.pdf
 
 
-#### Predictive models for forecasting hourly urban water demand
+## Predictive models for forecasting hourly urban water demand
 url: https://www.sciencedirect.com/science/article/pii/S0022169410001861
 
 See paper for notes
 
-## Backward
+#### Backward
 - no new
 
-## Forward
+#### Forward
 - no new
 
-#### A comparative study of artificial neural network architectures for time series prediction of water distribution system flow data
+## A comparative study of artificial neural network architectures for time series prediction of water distribution system flow data
 - url: http://eprints.whiterose.ac.uk/83574/
 
 See paper for notes
 - Refs:
     - Data-driven models cancomplement and sometimes replace deterministic models
 
-## Backward
+#### Backward
 - Kalman Filtering of Hydraulic Measurements for Burst Detection in Water Distribution Systems
     - url: https://ascelibrary.org/doi/10.1061/%28ASCE%29PS.1949-1204.0000070
 
-## Forward
+#### Forward
 - no new
 
-#### Pattern matching and associative artificial neural networks for water distribution system time series data analysis
+## Pattern matching and associative artificial neural networks for water distribution system time series data analysis
 - url: https://iwaponline.com/jh/article/16/3/617/3080/Pattern-matching-and-associative-artificial-neural
 
 See paper for notes
@@ -496,9 +496,9 @@ See paper for notes
     - Summary of tested techniques
     - Other pattern matching applications
 
-## Backward
+#### Backward
 - no new
 
-## Forward
+#### Forward
 - A review of data-driven approaches for burst detection in water distribution systems
     - url: https://www.tandfonline.com/doi/abs/10.1080/1573062X.2017.1279191

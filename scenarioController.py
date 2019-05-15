@@ -163,9 +163,12 @@ def getDataset(
     data = []
 
     # Decide if specific scenarios or just a number of them
-    if len(settings.scenarios) != 0:
-        scenarios = ["Scenario-" + str(x) for x in settings.scenarios]
-        count = len(settings.scenarios)
+    if settings.lockDataSets:
+        scenarios = settings.train + settings.test
+        count = len(scenarios)
+    elif len(settings.scenarios) != 0:
+        scenarios = settings.scenarios
+        count = len(scenarios)
     else:
         count = settings.numScenarios
 
@@ -179,7 +182,7 @@ def getDataset(
         if dirEntry.is_dir():
 
             # Decide if specific scenarios or just a number of them
-            if len(settings.scenarios) != 0:
+            if len(settings.scenarios) != 0 or settings.lockDataSets:
                 if dirEntry.path.split("/")[-1] not in scenarios:
                     continue
             else:
@@ -188,7 +191,7 @@ def getDataset(
 
             sc = ScenarioController(dirEntry.path)
 
-            # Read the target vectors
+            # Read the target tensors
             dfLabel = sc.getLabels()
             numColumnsTarget = settings.numClasses
             target = torch.tensor(dfLabel["Label"].values, dtype=torch.float32)
@@ -198,7 +201,11 @@ def getDataset(
                 target = target.unsqueeze(0)
             target = target.unsqueeze(2).unsqueeze(2)
 
-            # Read the feature vectors
+            # Structure the target tensor
+            if settings.singleTargetValue:
+                target = target.max(1, keepdim=True)[0]
+
+            # Read the feature tensors
             if dataStructure == "c":
                 df = sc.getAllData()
                 numColumnsTensor = tools.getNumSensors("t")
@@ -227,7 +234,6 @@ def getDataset(
                 presInp = torch.tensor(
                     dfPressure.loc[:, dfPressure.columns.difference(
                         ["Label", "Timestamp"])].values, dtype=torch.float32)
-                presInp = presInp.view(-1, 1, numPresSensor)
 
                 flowInp = torch.tensor(
                     dfFlow.loc[:, dfFlow.columns.difference(
@@ -238,14 +244,14 @@ def getDataset(
                     flowInp = tools.normalizeWindow(flowInp, sequenceSize)
 
                 if stepSize != 1 or sequenceSize != 1:
-                    presInp = presInp.unfold(0, sequenceSize, stepSize)
-                    flowInp = flowInp.unfold(0, sequenceSize, stepSize)
+                    presInp = presInp.unfold(0, sequenceSize, stepSize).transpose(1, 2)
+                    flowInp = flowInp.unfold(0, sequenceSize, stepSize).transpose(1, 2)
                 else:
-                    presInp = torch.unsqueeze(presInp, 1)
-                    flowInp = torch.unsqueeze(flowInp, 1)
+                    presInp = torch.unsqueeze(presInp, 0)
+                    flowInp = torch.unsqueeze(flowInp, 0)
 
-                presInp = presInp.transpose(1, 2).unsqueeze(2)
-                flowInp = flowInp.transpose(1, 2).unsqueeze(2)
+                presInp = presInp.unsqueeze(2)
+                flowInp = flowInp.unsqueeze(2)
 
                 inp = [(torch.tensor(pres), torch.tensor(flow)) for pres, flow in zip(presInp.tolist(), flowInp.tolist())]
 
@@ -261,14 +267,24 @@ def getDataset(
     if percentTestScenarios != 0.0:
         numTests = int(len(data)*percentTestScenarios)
 
-    random.shuffle(data)
-    trainingSet = data[numTests:]
-    testSet = data[:numTests]
+    if settings.lockDataSets:
+        trainingSet = []
+        testSet = []
+        for scenario in data:
+            if scenario[2] in settings.train:
+                trainingSet.append(scenario)
+            else:
+                testSet.append(scenario)
+    else:
+        random.shuffle(data)
+        trainingSet = data[numTests:]
+        testSet = data[:numTests]
+
     return trainingSet, testSet
 
 
 # testing
 if __name__ == "__main__":
     sc = ScenarioController(
-        "NetworkModels/Benchmarks/Net1/Scenario-2", readPressures=False)
+        "NetworkModels/Benchmarks/Hanoi_CMH/Scenario-1", readPressures=False)
     sc.plotTimeInterval("2017-01-01 00:00:00", "2017-01-28 10:45:00")

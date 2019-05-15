@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import torch
 
 from benchmark import Benchmark
+import settings
 
 
 class Trainer():
@@ -23,14 +24,11 @@ class Trainer():
         self.trainingDataPoints = []
         self.testDataPoints = []
 
-        self.currentlyTraining = False
-
         self.benchmarks = {}
 
         plt.ion()
-        self.fig, (self.trainingAxis, self.testAxis) = plt.subplots(2, 1)
-        self.trainingAxis.set_ylabel("Training loss")
-        self.testAxis.set_ylabel("Test loss")
+        self.fig, (self.trainingAxis, self.testAxis, self.epochAxis) = plt.subplots(3, 1)
+        self.fig.canvas.set_window_title(module.modelPath[:-3])
         plt.pause(0.0004)
 
     def train(self, trainingSet, testSet, numEpochs):
@@ -42,25 +40,36 @@ class Trainer():
         training/testing.
         """
 
-        self.currentlyTraining, self.trainingTime = True, time.time()
+        trainingTime = []
+        trainingEpochError = []
+        testEpochError = []
 
-        for epoch in range(numEpochs):
-            print("Epoch:", epoch)
+        while numEpochs != 0:
+            for epoch in range(numEpochs):
+                print("Epoch:", epoch)
+                trainingTime.append(time.time())
 
-            self.trainModule(trainingSet)
+                self.trainModule(trainingSet)
 
-            self.trainingAxis.plot(self.trainingDataPoints)
-            plt.draw()
-            plt.pause(0.0004)
+                # As the size of each scenario is the same, it is ok to avrage
+                # the avrages to get a total average
+                epochSlice = self.trainingDataPoints[-len(trainingSet):]
+                trainingEpochError.append(sum(epochSlice)/len(epochSlice))
 
-            self.testModule(testSet)
+                self.testModule(testSet)
 
-            self.testAxis.plot(self.testDataPoints)
-            plt.draw()
-            plt.pause(0.0004)
+                epochSlice = self.testDataPoints[-len(trainingSet):]
+                testEpochError.append(sum(epochSlice)/len(epochSlice))
 
-        self.currentlyTraining = False
-        self.printTrainingTime(identifier="Done training:")
+                self.updatePlot(trainingEpochError, testEpochError)
+
+            trainingTime[-1] = time.time() - trainingTime[-1]
+            print(self.module.modelPath)
+            print("epoch training time:", trainingTime[-1])
+
+            numEpochs = int(input("train more(0 or number of epochs):"))
+
+        print("total training time:", sum(trainingTime))
 
         plt.ioff()
         plt.show()
@@ -72,7 +81,6 @@ class Trainer():
             if hasattr(self.module, 'init_hidden'):
                 self.module.init_hidden()
 
-            prevTime = 0
             for tensor, target in zip(trainingSet, targetSet):
                 self.module.zero_grad()
 
@@ -91,7 +99,7 @@ class Trainer():
 
             print(
                 "Training", scenario,
-                "Accuracy", self.trainingDataPoints[-1]
+                "Error", self.trainingDataPoints[-1]
                 )
 
         self.module.eval()  # So the module is defaultly in eval mode
@@ -115,8 +123,25 @@ class Trainer():
             self.testDataPoints.append(
                 sum(scenarioError)/len(scenarioError))
             print(
-                "Testing", scenario, "Accuracy",
+                "Testing", scenario, "Error",
                 self.testDataPoints[-1])
+
+    def updatePlot(self, trainingEpochError, testEpochError):
+        self.trainingAxis.clear()
+        self.testAxis.clear()
+        self.epochAxis.clear()
+
+        self.trainingAxis.set_ylabel("Training Error")
+        self.testAxis.set_ylabel("Test Error")
+        self.epochAxis.set_ylabel("Avg epoch error")
+
+        self.trainingAxis.plot(self.trainingDataPoints)
+        self.testAxis.plot(self.testDataPoints)
+        self.epochAxis.plot(trainingEpochError, label="Training Epoch Error")
+        self.epochAxis.plot(testEpochError, label="Test Epoch Error")
+        self.epochAxis.legend()
+
+        plt.pause(0.0004)
 
     def printBenchmarks(self, data, ge=0.5):
         """Takes a data input of tensors and targets. ge is the value that is
@@ -145,32 +170,32 @@ class Trainer():
 
     def storeBenchmarks(self, path):
         with open(path, 'w+') as f:
-            f.write("Name" + "\t\t\t" + "Leak" + "\t" + "TPR" + "\t\t" + "FPR" + "\t\t" + "Accuracy" + "\n")
+            f.write(
+                "Name" + "\t\t\t" + "Leak" + "\t" + "TPR" + "\t\t" +
+                "FPR" + "\t\t" + "Acc" + "\t\t" + "DT" + "\n")
             for scenario in sorted(self.benchmarks.keys()):
                 bench = self.benchmarks[scenario]
                 if bench.p != 0:
                     leak = "yes"
                 else:
                     leak = "no"
-                f.write(f"{scenario:13}\t{leak}\t\t{bench.getTPR():.3f}\t{bench.getFPR():.3f}\t{bench.getAccuracy():.3f}\n")
+                f.write(f"{scenario:13}\t{leak}\t\t{bench.getTPR():.3f}\t{bench.getFPR():.3f}\t{bench.getAccuracy():.3f}\t{bench.dt}\n")
 
     def storePrediction(self, scenario, path, ge=0.5):
         self.module.eval()
         (tensors, targets, scenario) = scenario
 
         with open(path, 'w+') as f:
-            f.write("Pred \t target\n")
+            f.write("Pred \t label \t target\n")
             for tensor, target in zip(tensors, targets):
-                output = self.module(tensor).ge(ge)
+                output = self.module(tensor)
+                binariesed = output.ge(ge)
                 # uses ge to create a binary output vector
 
-                for x, y in zip(output.squeeze(), target.squeeze()):
-                    line = str(x.item()) + "\t" + str(y.item()) + "\n"
+                if settings.singleTargetValue:
+                    line = str(output.item()) + "\t\t" + str(binariesed,item()) + "\t\t" + str(target.item()) + "\n"
                     f.write(line)
-
-    def printTrainingTime(self, identifier):
-        """Prints how long the module has been training, with a given
-        identifier"""
-
-        if self.currentlyTraining:
-            print(identifier, time.time() - self.trainingTime)
+                else:
+                    for x, b, y in zip(output.squeeze(), binariesed.squeeze(), target.squeeze()):
+                        line = str(x.item()) + "\t\t" + str(b.item()) + "\t\t" + str(y.item()) + "\n"
+                        f.write(line)
