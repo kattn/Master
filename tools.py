@@ -38,7 +38,7 @@ def normalizeWindow(tensor, windowSize):
 
 def drawWDN(inpFile):
     wn = wntr.network.WaterNetworkModel(inpFile)
-    wntr.graphics.plot_network(wn, title=wn.name)
+    wntr.graphics.plot_network(wn, title=wn.name, node_labels=True)
     plt.show()
 
 
@@ -80,7 +80,70 @@ def storeInputOutputValues(inp, output, path="ioExample.txt", format="asci"):
         f.write(str(output) + "\n")
 
 
+def printLeakStats(path, scens=None, leakDim=False, numLeakLabels=False):
+    """
+    Takes path to the scenarios folder and scenarios to print.
+    If no scenarios are given, reads the whole folder.
+    """
+    if scens is None:
+        paths = [entry.path for entry in scandir(path)]
+    else:
+        scens = [str(scen) for scen in scens]
+        paths = [entry.path for entry in scandir(path) if entry.path.split("-")[-1] in scens]
+    leakStats = []
+
+    # prints scenario - leakDim of every leak
+    if leakDim:
+        leakStats.append("Scenario \t leakDim")
+        for path in paths:
+            if "." in path:
+                continue
+
+            scenario = path.split("/")[-1]
+            leaksFolder = path + "/Leaks/"
+            for cvsFile in listdir(leaksFolder):
+                if "info" in cvsFile:
+                    with open(leaksFolder+cvsFile, "r") as f:
+                        leakDim = f.readlines()[3].split(",")[-1].strip()
+                    leakStats.append(f"{scenario} \t {float(leakDim):.3}")
+
+    # prints total leak and non leak labels, and for only leak scenarios
+    if numLeakLabels:
+        df = pandas.read_csv(path+"/Labels.csv")
+        if scens is not None:
+            df = pandas.read_csv(path+"/Labels.csv").loc[df["Scenario"].isin(scens)]
+
+        leakScenarios = df.loc[df["Label"] == 1.0]
+        numLeakScenarios = len(leakScenarios.index)
+        numNonLeakScenarios = len(df.index) - numLeakScenarios
+        leakStats.append("#Leak Scenarios: " + str(numLeakScenarios))
+        leakStats.append("#Non Leak Scenarios: " + str(numNonLeakScenarios))
+
+        leakLabels = 0
+        nonLeakLabels = 0
+        for path in paths:
+            if "." in path:
+                continue
+
+            scenLabelsDF = pandas.read_csv(path+"/Labels.csv", usecols=["Label"])
+            leakLabels += len(scenLabelsDF.loc[scenLabelsDF["Label"] == 1.0].index)
+            nonLeakLabels += len(scenLabelsDF.loc[scenLabelsDF["Label"] == 0.0].index)
+
+        totalLabelsWithNonLeaks = leakLabels + nonLeakLabels
+        totalLabelsWithoutNonLeaks = leakLabels + nonLeakLabels - numNonLeakScenarios*2880
+        print(totalLabelsWithNonLeaks)
+        print(totalLabelsWithoutNonLeaks)
+
+        leakStats.append(f"%Leaks with non Leak: {leakLabels/totalLabelsWithNonLeaks:.3f}")
+        leakStats.append(f"%Leaks without non Leak: {leakLabels/totalLabelsWithoutNonLeaks:.3f}")
+
+    for line in leakStats:
+        print(line)
+
+
 if __name__ == "__main__":
-    drawWDN("NetworkModels/networks/Net1.inp")
-    drawWDN("NetworkModels/networks/Net3.inp")
-    drawWDN("NetworkModels/networks/Hanoi_CMH.inp")
+    # drawWDN("NetworkModels/networks/Net1.inp")
+    # drawWDN("NetworkModels/networks/Net3.inp")
+    # drawWDN("NetworkModels/networks/Hanoi_CMH.inp")
+
+    printLeakStats("NetworkModels/Benchmarks/Hanoi_CMH", scens=[185, 63, 31, 21, 169, 142, 184, 162, 138, 112, 192, 51, 99, 55, 122, 91, 67, 130, 171, 79, 171, 193, 10, 67, 157, 16, 30, 144, 86, 177, 198, 155, 40, 167, 200, 123, 176, 152, 180, 127, 163, 40, 70, 149, 12, 49, 92, 197, 28, 99], numLeakLabels=True)

@@ -44,7 +44,7 @@ class Benchmark:
         if settings.singleTargetValue:
             predicted = [predicted]
             actual = [actual]
-
+        
         currentLeak = False
         for i, (x, y) in enumerate(zip(predicted, actual)):
             x = int(x)

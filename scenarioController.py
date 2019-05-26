@@ -148,7 +148,9 @@ def getDataset(
         numTestScenarios=0,
         percentTestScenarios=0.2,
         sequenceSize=1,
-        stepSize=1):
+        stepSize=1,
+        targetType="float",
+        sensors=None):
     """
     The data structure parameter structures the input accordingly:
     c -- combines the flow and pressure measurements
@@ -194,7 +196,11 @@ def getDataset(
             # Read the target tensors
             dfLabel = sc.getLabels()
             numColumnsTarget = settings.numClasses
-            target = torch.tensor(dfLabel["Label"].values, dtype=torch.float32)
+            if targetType == "float":
+                target = torch.tensor(dfLabel["Label"].values, dtype=torch.float32)
+            elif targetType == "long":
+                target = torch.tensor(dfLabel["Label"].values, dtype=torch.long)
+
             if stepSize != 1 or sequenceSize != 1:
                 target = target.unfold(0, sequenceSize, stepSize)
             else:
@@ -214,6 +220,7 @@ def getDataset(
                 inp = torch.tensor(
                     df.loc[:, df.columns.difference(
                         ["Label", "Timestamp"])].values, dtype=torch.float32)
+                
                 if settings.normalizeInput:
                     inp = tools.normalizeWindow(inp, sequenceSize)
 
@@ -227,8 +234,6 @@ def getDataset(
             elif dataStructure == "s":
                 dfPressure = sc.getPressures(False)
                 dfFlow = sc.getFlows(False)
-                numPresSensor = tools.getNumSensors("p")
-                numFlowSensor = tools.getNumSensors("f")
 
                 # Convert the dataframes to a tensors
                 presInp = torch.tensor(
@@ -256,9 +261,9 @@ def getDataset(
                 inp = [(torch.tensor(pres), torch.tensor(flow)) for pres, flow in zip(presInp.tolist(), flowInp.tolist())]
 
             data.append((inp, target, dirEntry.path.split("/")[-1]))
-            print(count, "files on the wall,", count, "files to read")
-            print(
-                "Take one down, pass it around,", count-1, "files on the wall")
+            # print(count, "files on the wall,", count, "files to read")
+            # print(
+            #    "Take one down, pass it around,", count-1, "files on the wall")
             count -= 1
 
     numTests = 0
@@ -286,5 +291,8 @@ def getDataset(
 # testing
 if __name__ == "__main__":
     sc = ScenarioController(
-        "NetworkModels/Benchmarks/Hanoi_CMH/Scenario-1", readPressures=False)
-    sc.plotTimeInterval("2017-01-01 00:00:00", "2017-01-28 10:45:00")
+        "NetworkModels/Benchmarks/Net1/Scenario-3", readFlows=False, readPressures=False)
+    # sc.plotTimeInterval("2017-01-01 00:00:00", "2017-01-8 00:00:00")
+    df = sc.getAllData()
+    columns = ["Node_"+str(sensor) for sensor in [12, 21]]
+    print(df[columns])

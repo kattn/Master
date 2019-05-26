@@ -19,7 +19,8 @@ trainingSet, testSet = scenarioController.getDataset(
     dataStructure="s",
     percentTestScenarios=settings.percentTestScenarios,
     sequenceSize=settings.sequenceSize,
-    stepSize=settings.stepSize
+    stepSize=settings.stepSize,
+    targetType="long"
     )
 
 print("Dataset read in time", time.time() - dsTime)
