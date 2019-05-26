@@ -48,9 +48,11 @@ def getNumSensors(sensorType):
     "p" -- if pressure is wanted
     "f" -- if flow is wanted
 
-    Calculates number by counting the number of files in the pressure/flow
-    measurements folders.
+    Either returns the number of sensors in settings, oralculates number by
+    counting the number of files in the pressure/flow measurements folders.
     """
+    if settings.sensors is not None:
+        return len(settings.sensors)
 
     if sensorType == "f":
         path = settings.scenariosFolder + "Scenario-1/Flows"

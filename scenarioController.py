@@ -164,6 +164,9 @@ def getDataset(
 
     data = []
 
+    if sensors is not None:
+        sensors = ["Node_"+str(sensor) for sensor in sensors]
+
     # Decide if specific scenarios or just a number of them
     if settings.lockDataSets:
         scenarios = settings.train + settings.test
@@ -214,6 +217,8 @@ def getDataset(
             # Read the feature tensors
             if dataStructure == "c":
                 df = sc.getAllData()
+                if sensors:
+                    df = df[sensors]
                 numColumnsTensor = tools.getNumSensors("t")
 
                 # Convert the dataframe to a tensor
@@ -233,6 +238,8 @@ def getDataset(
 
             elif dataStructure == "s":
                 dfPressure = sc.getPressures(False)
+                if sensors:
+                    dfPressure = dfPressure[sensors]
                 dfFlow = sc.getFlows(False)
 
                 # Convert the dataframes to a tensors
@@ -291,8 +298,18 @@ def getDataset(
 # testing
 if __name__ == "__main__":
     sc = ScenarioController(
-        "NetworkModels/Benchmarks/Net1/Scenario-3", readFlows=False, readPressures=False)
+        "NetworkModels/Benchmarks/Hanoi_CMH/Scenario-3", readFlows=False, readPressures=False)
     # sc.plotTimeInterval("2017-01-01 00:00:00", "2017-01-8 00:00:00")
     df = sc.getAllData()
     columns = ["Node_"+str(sensor) for sensor in [12, 21]]
     print(df[columns])
+
+    trainingSet, testSet = getDataset(
+        pathToScenarios=settings.scenariosFolder,
+        dataStructure="s",
+        percentTestScenarios=settings.percentTestScenarios,
+        sequenceSize=settings.sequenceSize,
+        stepSize=settings.stepSize,
+        targetType="long",
+        sensors=[12,21]
+        )
