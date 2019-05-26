@@ -17,7 +17,7 @@ import tools
 inputSize = tools.getNumSensors("p")
 hiddenSize = 50
 bidirectional = False
-numLayers = 2
+numLayers = 3
 dropout = 0
 
 outputFunction = nn.Softmax(dim=settings.numClasses)
