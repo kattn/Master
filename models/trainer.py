@@ -86,12 +86,12 @@ class Trainer():
 
                 output = self.module(tensor)
 
-                loss = self.lossFunction(output, target)
+                loss = self.lossFunction(output.squeeze(1), target.squeeze())
                 loss.backward(retain_graph=True)
                 self.optimizer.step()
 
                 scenarioError.append(
-                    torch.mean(torch.abs(output - target)).item()
+                    torch.mean(torch.abs(output - target.float())).item()
                 )
 
             self.trainingDataPoints.append(
@@ -117,7 +117,7 @@ class Trainer():
                 output = self.module(tensor)
 
                 scenarioError.append(
-                    torch.mean(torch.abs(output - target)).item()
+                    torch.mean(torch.abs(output - target.float())).item()
                     )
 
             self.testDataPoints.append(
@@ -143,7 +143,7 @@ class Trainer():
 
         plt.pause(0.0004)
 
-    def printBenchmarks(self, data, ge=0.5):
+    def printBenchmarks(self, data):
         """Takes a data input of tensors and targets. ge is the value that is
         used to treshold the output to 1 and 0.
         Returns TPR, FPR and accuracy for each data"""
@@ -154,8 +154,8 @@ class Trainer():
             bench = Benchmark()
 
             for tensor, target in zip(tensors, targets):
-                output = self.module(tensor).ge(ge)
-                # uses ge to create a binary output vector
+                output = self.module(tensor).max(2)[1]
+                
                 bench += Benchmark(
                     output.squeeze(), target.squeeze())
 
@@ -186,16 +186,15 @@ class Trainer():
         (tensors, targets, scenario) = scenario
 
         with open(path, 'w+') as f:
-            f.write("Pred \t label \t target\n")
+            f.write("Pred \t\t label \t target\n")
             for tensor, target in zip(tensors, targets):
                 output = self.module(tensor)
-                binariesed = output.ge(ge)
-                # uses ge to create a binary output vector
+                classification = output.max(2)[1]
 
                 if settings.singleTargetValue:
-                    line = str(output.item()) + "\t\t" + str(binariesed,item()) + "\t\t" + str(target.item()) + "\n"
+                    line = f"{output}\t{binariesed.item()}\t{target.item()}\n"
                     f.write(line)
                 else:
-                    for x, b, y in zip(output.squeeze(), binariesed.squeeze(), target.squeeze()):
-                        line = str(x.item()) + "\t\t" + str(b.item()) + "\t\t" + str(y.item()) + "\n"
+                    for x, b, y in zip(output.squeeze(), classification, target.squeeze()):
+                        line = f"{float(x[0]):.3f}, {float(x[1]):.3f}" + "\t\t" + str(b.item()) + "\t\t" + str(y.item()) + "\n"
                         f.write(line)

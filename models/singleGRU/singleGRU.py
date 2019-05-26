@@ -15,20 +15,21 @@ import tools
 # Dropout was not used
 # Number of layers was tested with 1, 2, 3
 inputSize = tools.getNumSensors("p")
-hiddenSize = 10
+hiddenSize = 50
 bidirectional = False
-numLayers = 3
+numLayers = 2
 dropout = 0
 
-outputFunction = nn.Sigmoid()
+outputFunction = nn.Softmax(dim=settings.numClasses)
 
 
 class SingleGRU(nn.Module):
     lr = 0.03
-    lossFunction = nn.L1Loss()
+    targetWeight = torch.tensor([0.325, 0.675])
+    lossFunction = nn.CrossEntropyLoss(weight=targetWeight)
     optimizer = optim.Adam
 
-    numEpochs = 10
+    numEpochs = 25
 
     def __init__(self):
         super(SingleGRU, self).__init__()
@@ -58,5 +59,5 @@ class SingleGRU(nn.Module):
 
         output, self.hidden = self.gru(inp, self.hidden.detach())
         output = self.decoder(output)
-        output = self.output(output)
+        # output = self.output(output)
         return output

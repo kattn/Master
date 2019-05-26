@@ -16,7 +16,7 @@ torch.manual_seed(1)
 # Dropout was not used
 # Number of layers was tested with 1, 2, 3
 inputSize = tools.getNumSensors("p")
-hiddenSize = 5
+hiddenSize = 20
 bidirectional = False
 numLayers = 3
 dropout = 0

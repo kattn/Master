@@ -35,6 +35,7 @@ timeStamp = pandas.date_range("2017-01-01 00:00", periods=durationHours*(60/sim_
 labelScenarios = []
 uncertainty_Topology = 'NO'
 INP = "Hanoi_CMH"
+# INP = "Net1"
 
 
 # RUN SCENARIOS
@@ -395,12 +396,12 @@ if __name__ == '__main__':
 
     t = time.time()
     
-    NumScenarios = 50
+    NumScenarios = 200
     scArray = range(1, NumScenarios+1)
     
     numCores = multiprocessing.cpu_count()
     p = multiprocessing.Pool(1)
-    p.map(runScenarios, range(1,NumScenarios+1))
+    p.map(runScenarios, range(1, NumScenarios+1))
     p.close()
     p.join()
 
