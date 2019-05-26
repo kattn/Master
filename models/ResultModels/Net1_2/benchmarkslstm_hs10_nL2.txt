@@ -1,0 +1,11 @@
+Name			Leak	TPR		FPR		Acc		DT
+Scenario-3   	no		1.000	0.000	1.000	[]
+Scenario-4   	no		1.000	0.000	1.000	[]
+Scenario-70  	yes		0.756	0.000	0.940	[22]
+Scenario-73  	yes		0.995	0.001	0.998	[6]
+Scenario-76  	yes		0.997	0.000	0.999	[2]
+Scenario-77  	yes		0.849	0.000	0.986	[25]
+Scenario-81  	yes		0.000	0.000	0.965	[-1]
+Scenario-82  	yes		0.977	0.000	0.994	[13]
+Scenario-83  	yes		0.931	0.001	0.969	[142, 14]
+Scenario-84  	yes		0.625	0.000	0.907	[28]
