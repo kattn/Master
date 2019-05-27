@@ -154,10 +154,10 @@ class Trainer():
             bench = Benchmark()
 
             for tensor, target in zip(tensors, targets):
-                output = self.module(tensor).max(2)[1]
+                classification = self.module.classify(tensor)[1]
                 
                 bench += Benchmark(
-                    output.squeeze(), target.squeeze())
+                    classification.squeeze(), target.squeeze())
 
             if bench.p != 0:
                 leak = "yes"
@@ -188,13 +188,12 @@ class Trainer():
         with open(path, 'w+') as f:
             f.write("Pred \t\t label \t target\n")
             for tensor, target in zip(tensors, targets):
-                output = self.module(tensor)
-                classification = output.max(2)[1]
+                output, classification = self.module.classify(tensor)
 
                 if settings.singleTargetValue:
                     line = f"{output}\t{binariesed.item()}\t{target.item()}\n"
                     f.write(line)
                 else:
-                    for x, b, y in zip(output.squeeze(), classification, target.squeeze()):
+                    for x, b, y in zip(output.squeeze(), classification.squeeze(), target.squeeze()):
                         line = f"{float(x[0]):.3f}, {float(x[1]):.3f}" + "\t\t" + str(b.item()) + "\t\t" + str(y.item()) + "\n"
                         f.write(line)

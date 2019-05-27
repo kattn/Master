@@ -25,7 +25,7 @@ outputFunction = nn.Softmax(dim=settings.numClasses)
 
 class SingleGRU(nn.Module):
     lr = 0.03
-    targetWeight = torch.tensor([0.325, 0.675])
+    targetWeight = torch.tensor([1, 2.125])
     lossFunction = nn.CrossEntropyLoss(weight=targetWeight)
     optimizer = optim.Adam
 
@@ -61,3 +61,14 @@ class SingleGRU(nn.Module):
         output = self.decoder(output)
         # output = self.output(output)
         return output
+
+    # Returns the original output and classification
+    def classify(self, inp):
+        output = self(inp)
+        
+        if self.lossFunction.__class__() == "BCELoss()":
+            classification = output.ge(0.5)
+        elif self.lossFunction.__class__() == "CrossEntropyLoss()":
+            classification = output.max(1)[2]
+
+        return output, classification
