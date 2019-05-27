@@ -133,8 +133,6 @@ def printLeakStats(path, scens=None, leakDim=False, numLeakLabels=False):
 
         totalLabelsWithNonLeaks = leakLabels + nonLeakLabels
         totalLabelsWithoutNonLeaks = leakLabels + nonLeakLabels - numNonLeakScenarios*2880
-        print(totalLabelsWithNonLeaks)
-        print(totalLabelsWithoutNonLeaks)
 
         leakStats.append(f"%Leaks with non Leak: {leakLabels/totalLabelsWithNonLeaks:.3f}")
         leakStats.append(f"%Leaks without non Leak: {leakLabels/totalLabelsWithoutNonLeaks:.3f}")
@@ -148,4 +146,4 @@ if __name__ == "__main__":
     # drawWDN("NetworkModels/networks/Net3.inp")
     # drawWDN("NetworkModels/networks/Hanoi_CMH.inp")
 
-    printLeakStats("NetworkModels/Benchmarks/Hanoi_CMH", scens=[185, 63, 31, 21, 169, 142, 184, 162, 138, 112, 192, 51, 99, 55, 122, 91, 67, 130, 171, 79, 171, 193, 10, 67, 157, 16, 30, 144, 86, 177, 198, 155, 40, 167, 200, 123, 176, 152, 180, 127, 163, 40, 70, 149, 12, 49, 92, 197, 28, 99], numLeakLabels=True)
+    printLeakStats("NetworkModels/Benchmarks/Hanoi_CMH", scens=[185, 63, 31], numLeakLabels=True)
