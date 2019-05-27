@@ -29,7 +29,7 @@ class SingleGRU(nn.Module):
     lossFunction = nn.CrossEntropyLoss(weight=targetWeight)
     optimizer = optim.Adam
 
-    numEpochs = 25
+    numEpochs = 5
 
     def __init__(self):
         super(SingleGRU, self).__init__()
@@ -65,10 +65,12 @@ class SingleGRU(nn.Module):
     # Returns the original output and classification
     def classify(self, inp):
         output = self(inp)
-        
-        if self.lossFunction.__class__() == "BCELoss()":
+
+        if str(self.lossFunction.__class__()) == "BCELoss()":
             classification = output.ge(0.5)
-        elif self.lossFunction.__class__() == "CrossEntropyLoss()":
-            classification = output.max(1)[2]
+        elif str(self.lossFunction.__class__()) == "CrossEntropyLoss()":
+            classification = output.max(2)[1]
+        else:
+            raise Exception("No classification for " + str(self.lossFunction.__class__()))
 
         return output, classification
