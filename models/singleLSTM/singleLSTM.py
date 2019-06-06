@@ -18,18 +18,18 @@ torch.manual_seed(1)
 inputSize = tools.getNumSensors("p")
 hiddenSize = 20
 bidirectional = False
-numLayers = 3
+numLayers = 2
 dropout = 0
 
 outputFunction = nn.Sigmoid()
 
 
 class SingleLSTM(nn.Module):
-    lr = 0.01
+    lr = 0.003
     lossFunction = nn.BCELoss()
     optimizer = optim.Adam
 
-    numEpochs = 50
+    numEpochs = 350
 
     def __init__(self):
         super(SingleLSTM, self).__init__()
@@ -42,6 +42,15 @@ class SingleLSTM(nn.Module):
         self.decoder = nn.Linear(
             hiddenSize*(bidirectional+1), settings.numClasses)
 
+        # set forget gate bias to 1
+        for names in self.lstm._all_weights:
+            for name in filter(lambda n: "bias" in n, names):
+                bias = getattr(self.lstm, name)
+                n = bias.size(0)
+                start, end = n//4, n//2
+                bias.data[start:end].fill_(1.)
+
+        self.name = input("Name the model: ")
         self.modelPath = "lstm_hs" + str(hiddenSize) + "_nL" + str(numLayers) + ".pt"
 
     def init_hidden(self, hidden=None):
@@ -64,3 +73,20 @@ class SingleLSTM(nn.Module):
         output = self.decoder(output)
         output = self.output(output)
         return output
+
+    # Returns the original output and classification
+    def classify(self, inp):
+        output = self(inp)
+
+        if str(self.lossFunction.__class__()) == "BCELoss()":
+            classification = output.ge(0.5)
+        elif str(self.lossFunction.__class__()) == "MSELoss()":
+            classification = output.ge(0.5)
+        elif str(self.lossFunction.__class__()) == "L1Loss()":
+            classification = output.ge(0.5)
+        elif str(self.lossFunction.__class__()) == "CrossEntropyLoss()":
+            classification = output.max(2)[1]
+        else:
+            raise Exception("No classification for " + str(self.lossFunction.__class__()))
+
+        return output, classification

@@ -1,6 +1,7 @@
 import time
 import matplotlib.pyplot as plt
 import torch
+import random
 
 from benchmark import Benchmark
 import settings
@@ -28,7 +29,7 @@ class Trainer():
 
         plt.ion()
         self.fig, (self.trainingAxis, self.testAxis, self.epochAxis) = plt.subplots(3, 1)
-        self.fig.canvas.set_window_title(module.modelPath[:-3])
+        self.fig.canvas.set_window_title(module.name + " " + module.modelPath[:-3])
         plt.pause(0.0004)
 
     def train(self, trainingSet, testSet, numEpochs):
@@ -49,7 +50,10 @@ class Trainer():
                 print("Epoch:", epoch)
                 trainingTime.append(time.time())
 
+                random.shuffle(trainingSet)
                 self.trainModule(trainingSet)
+                # self.storePrediction(trainingSet[0], "debug.txt")
+                # input()
 
                 # As the size of each scenario is the same, it is ok to avrage
                 # the avrages to get a total average
@@ -65,11 +69,18 @@ class Trainer():
 
             trainingTime[-1] = time.time() - trainingTime[-1]
             print(self.module.modelPath)
-            print("epoch training time:", trainingTime[-1])
+            print(self.module.name)
+            self.printBenchmarks(trainingSet+testSet)
 
             numEpochs = int(input("train more(0 or number of epochs):"))
 
         print("total training time:", sum(trainingTime))
+
+        # fName = "Error_" + self.module.name + ".txt"
+        # with open(fName, 'w+') as f:
+        #     f.write("training, test")
+        #     for trainErr, testErr in zip(trainingEpochError, testEpochError):
+        #         f.write(f"{trainErr:.4f} \t {testErr:.4f}\n")
 
         plt.ioff()
         plt.show()
@@ -85,13 +96,21 @@ class Trainer():
                 self.module.zero_grad()
 
                 output = self.module(tensor)
+                # output = torch.cat((output, 1-output), 2)
 
                 loss = self.lossFunction(output.squeeze(1), target.squeeze())
                 loss.backward(retain_graph=True)
                 self.optimizer.step()
+                # for p,n in zip(self.module.gru.parameters(),self.module.gru._all_weights[0]):
+                #     if n[:6] == 'weight':
+                #         print('===========\ngradient:{}\n----------\n{}'.format(n,p.grad))
+
+                # convert as target may be long when using CrossEntropy
+                if target.dtype is torch.long:
+                    target = target.float()
 
                 scenarioError.append(
-                    torch.mean(torch.abs(output - target.float())).item()
+                    torch.mean(torch.abs(output - target)).item()
                 )
 
             self.trainingDataPoints.append(
@@ -155,7 +174,7 @@ class Trainer():
 
             for tensor, target in zip(tensors, targets):
                 classification = self.module.classify(tensor)[1]
-                
+
                 bench += Benchmark(
                     classification.squeeze(), target.squeeze())
 
@@ -181,7 +200,7 @@ class Trainer():
                     leak = "no"
                 f.write(f"{scenario:13}\t{leak}\t\t{bench.getTPR():.3f}\t{bench.getFPR():.3f}\t{bench.getAccuracy():.3f}\t{bench.dt}\n")
 
-    def storePrediction(self, scenario, path, ge=0.5):
+    def storePrediction(self, scenario, path):
         self.module.eval()
         (tensors, targets, scenario) = scenario
 
@@ -195,5 +214,5 @@ class Trainer():
                     f.write(line)
                 else:
                     for x, b, y in zip(output.squeeze(), classification.squeeze(), target.squeeze()):
-                        line = f"{float(x[0]):.3f}, {float(x[1]):.3f}" + "\t\t" + str(b.item()) + "\t\t" + str(y.item()) + "\n"
+                        line = f"{x}" + "\t\t" + str(b.item()) + "\t\t" + str(y.item()) + "\n"
                         f.write(line)

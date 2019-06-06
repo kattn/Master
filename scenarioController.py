@@ -102,32 +102,36 @@ class ScenarioController:
 
         return df
 
-    def plotTimeInterval(self, start, stop):
+    def plotTimeInterval(self, start, stop, normalize=False):
         # slize measures to plot
         pressureSlize = self.getPressures(withLabels=False).loc[start:stop, :]
         flowsSlize = self.getFlows(withLabels=False).loc[start:stop]
-        demandsSlize = self.getDemands(withLabels=False).loc[start:stop, :]
+        # demandsSlize = self.getDemands(withLabels=False).loc[start:stop, :]
         labelSlize = self.getLabels().loc[start:stop]
 
-        # plot
-        fig, ax = plt.subplots(4, sharex=True)
+        if normalize:
+            pressureSlize = pressureSlize.apply(normalizeDf, axis=1)
+            flowsSlize = flowsSlize.apply(normalizeDf, axis=1)
 
-        dax = demandsSlize.plot(ax=ax[0])
-        dax.set_ylabel("Demand")
-        dax.get_legend().set_visible(False)
-        pax = pressureSlize.plot(ax=ax[1])
+        # plot
+        fig, ax = plt.subplots(3, sharex=True)
+
+        # dax = demandsSlize.plot(ax=ax[0])
+        # dax.set_ylabel("Demand")
+        # dax.get_legend().set_visible(False)
+        pax = pressureSlize.plot(ax=ax[0])
         pax.set_ylabel("Pressure")
         pax.get_legend().set_visible(False)
-        fax = flowsSlize.plot(ax=ax[2])
+        fax = flowsSlize.plot(ax=ax[1])
         fax.set_ylabel("Flow")
         fax.get_legend().set_visible(False)
-        lax = labelSlize.plot(ax=ax[3])
+        lax = labelSlize.plot(ax=ax[2])
         lax.set_ylabel("Label")
         lax.get_legend().set_visible(False)
 
         # prettify plot
         fig.subplots_adjust(hspace=0)
-        handles, labels = dax.get_legend_handles_labels()
+        handles, labels = pax.get_legend_handles_labels()
         fig.legend(
             handles, labels, loc="center left",
             bbox_to_anchor=(0.6, 0.5), ncol=2)
@@ -140,6 +144,11 @@ class ScenarioController:
         plt.tight_layout(rect=[0, 0, 0.6, 1])
 
         plt.show()
+
+
+def normalizeDf(dfRow):
+    df = (dfRow - dfRow.min())/(dfRow.max()-dfRow.min())
+    return df
 
 
 def getDataset(
@@ -225,7 +234,7 @@ def getDataset(
                 inp = torch.tensor(
                     df.loc[:, df.columns.difference(
                         ["Label", "Timestamp"])].values, dtype=torch.float32)
-                
+
                 if settings.normalizeInput:
                     inp = tools.normalizeWindow(inp, sequenceSize)
 
@@ -298,18 +307,19 @@ def getDataset(
 # testing
 if __name__ == "__main__":
     sc = ScenarioController(
-        "NetworkModels/Benchmarks/Hanoi_CMH/Scenario-3", readFlows=False, readPressures=False)
-    # sc.plotTimeInterval("2017-01-01 00:00:00", "2017-01-8 00:00:00")
-    df = sc.getAllData()
-    columns = ["Node_"+str(sensor) for sensor in [12, 21]]
-    print(df[columns])
+        "NetworkModels/Benchmarks/Hanoi_CMH/Scenario-77", readFlows=False, readPressures=False)
+    sc.plotTimeInterval("2017-01-27 00:00:00", "2017-01-30 23:45:00", True)
+    sc.plotTimeInterval("2017-01-27 00:00:00", "2017-01-30 23:45:00", False)
+    # df = sc.getAllData()
+    # columns = ["Node_"+str(sensor) for sensor in [12, 21]]
+    # print(df[columns])
 
-    trainingSet, testSet = getDataset(
-        pathToScenarios=settings.scenariosFolder,
-        dataStructure="s",
-        percentTestScenarios=settings.percentTestScenarios,
-        sequenceSize=settings.sequenceSize,
-        stepSize=settings.stepSize,
-        targetType="long",
-        sensors=[12,21]
-        )
+    # trainingSet, testSet = getDataset(
+    #     pathToScenarios=settings.scenariosFolder,
+    #     dataStructure="s",
+    #     percentTestScenarios=settings.percentTestScenarios,
+    #     sequenceSize=settings.sequenceSize,
+    #     stepSize=settings.stepSize,
+    #     targetType="long",
+    #     sensors=[12,21]
+    #     )

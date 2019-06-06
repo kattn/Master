@@ -82,23 +82,23 @@ def storeInputOutputValues(inp, output, path="ioExample.txt", format="asci"):
         f.write(str(output) + "\n")
 
 
-def printLeakStats(path, scens=None, leakDim=False, numLeakLabels=False):
+def printLeakStats(networkPath, scens=None, leakDim=False, numLeakLabels=False):
     """
     Takes path to the scenarios folder and scenarios to print.
     If no scenarios are given, reads the whole folder.
     """
     if scens is None:
-        paths = [entry.path for entry in scandir(path)]
+        paths = [entry.path for entry in scandir(networkPath)]
     else:
         scens = [str(scen) for scen in scens]
-        paths = [entry.path for entry in scandir(path) if entry.path.split("-")[-1] in scens]
+        paths = [entry.path for entry in scandir(networkPath) if entry.path.split("-")[-1] in scens]
     leakStats = []
 
     # prints scenario - leakDim of every leak
     if leakDim:
         leakStats.append("Scenario \t leakDim")
         for path in paths:
-            if "." in path:
+            if "." in path:  # Scand dir picks up labels file, this avoids it
                 continue
 
             scenario = path.split("/")[-1]
@@ -109,15 +109,16 @@ def printLeakStats(path, scens=None, leakDim=False, numLeakLabels=False):
                         leakDim = f.readlines()[3].split(",")[-1].strip()
                     leakStats.append(f"{scenario} \t {float(leakDim):.3}")
 
-    # prints total leak and non leak labels, and for only leak scenarios
+    # prints total leak and non leak labels, and only for leak scenarios
     if numLeakLabels:
-        df = pandas.read_csv(path+"/Labels.csv")
+        dfLabels = pandas.read_csv(networkPath+"/Labels.csv")
         if scens is not None:
-            df = pandas.read_csv(path+"/Labels.csv").loc[df["Scenario"].isin(scens)]
+            dfLabels = pandas.read_csv(networkPath+"/Labels.csv").loc[dfLabels["Scenario"].isin(scens)]
 
-        leakScenarios = df.loc[df["Label"] == 1.0]
+        leakScenarios = dfLabels.loc[dfLabels["Label"] == 1.0]
         numLeakScenarios = len(leakScenarios.index)
-        numNonLeakScenarios = len(df.index) - numLeakScenarios
+        # print(dfLabels)
+        numNonLeakScenarios = len(dfLabels.index) - numLeakScenarios
         leakStats.append("#Leak Scenarios: " + str(numLeakScenarios))
         leakStats.append("#Non Leak Scenarios: " + str(numNonLeakScenarios))
 
@@ -146,4 +147,6 @@ if __name__ == "__main__":
     # drawWDN("NetworkModels/networks/Net3.inp")
     # drawWDN("NetworkModels/networks/Hanoi_CMH.inp")
 
-    printLeakStats("NetworkModels/Benchmarks/Hanoi_CMH", scens=[185, 63, 31], numLeakLabels=True)
+    # bits = settings.med + settings.big + settings.bigger
+    # printLeakStats("NetworkModels/Benchmarks/Hanoi_CMH", scens=settings.train40, numLeakLabels=True, leakDim=True)
+    pass

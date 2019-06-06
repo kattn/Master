@@ -15,24 +15,27 @@ import tools
 # Dropout was not used
 # Number of layers was tested with 1, 2, 3
 inputSize = tools.getNumSensors("p")
-hiddenSize = 50
+hiddenSize = 20
 bidirectional = False
-numLayers = 3
-dropout = 0
+numLayers = 2
+dropout = 0.3
 
-outputFunction = nn.Softmax(dim=settings.numClasses)
+# outputFunction = nn.Softmax(dim=settings.numClasses)
+outputFunction = nn.Sigmoid()
 
 
 class SingleGRU(nn.Module):
-    lr = 0.03
-    targetWeight = torch.tensor([1, 2.125])
-    lossFunction = nn.CrossEntropyLoss(weight=targetWeight)
+    lr = 0.003
+    targetWeight = torch.tensor([0.36, 0.64])
+    # lossFunction = nn.CrossEntropyLoss(weight=targetWeight)
+    lossFunction = nn.BCELoss()
     optimizer = optim.Adam
 
-    numEpochs = 5
+    numEpochs = 50
 
     def __init__(self):
         super(SingleGRU, self).__init__()
+        self.name = input("Name the model:")
         self.hidden = self.init_hidden()
         self.output = outputFunction
         self.gru = nn.GRU(
@@ -57,9 +60,15 @@ class SingleGRU(nn.Module):
         if isinstance(inp, tuple):
             inp = inp[0]
 
-        output, self.hidden = self.gru(inp, self.hidden.detach())
+        output, self.hidden = self.gru(inp, self.hidden)
+        # print("output")
+        # print(output)
         output = self.decoder(output)
-        # output = self.output(output)
+        # print("decoderOutput")
+        # print(output)
+        output = self.output(output)
+        # print("sigmoidOutput")
+        # print(output)
         return output
 
     # Returns the original output and classification
@@ -67,6 +76,10 @@ class SingleGRU(nn.Module):
         output = self(inp)
 
         if str(self.lossFunction.__class__()) == "BCELoss()":
+            classification = output.ge(0.5)
+        elif str(self.lossFunction.__class__()) == "MSELoss()":
+            classification = output.ge(0.5)
+        elif str(self.lossFunction.__class__()) == "L1Loss()":
             classification = output.ge(0.5)
         elif str(self.lossFunction.__class__()) == "CrossEntropyLoss()":
             classification = output.max(2)[1]

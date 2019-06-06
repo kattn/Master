@@ -13,6 +13,7 @@ from models.dualLSTM.dualLSTM import DualLSTM
 from models.cnnGRU.cnnGRU import CNNGRU
 from models.cnn.cnn import CNN
 
+
 dsTime = time.time()
 trainingSet, testSet = scenarioController.getDataset(
     pathToScenarios=settings.scenariosFolder,
@@ -20,7 +21,7 @@ trainingSet, testSet = scenarioController.getDataset(
     percentTestScenarios=settings.percentTestScenarios,
     sequenceSize=settings.sequenceSize,
     stepSize=settings.stepSize,
-    targetType="long",
+    targetType="float",
     sensors=settings.sensors
     )
 
@@ -44,7 +45,7 @@ if not settings.loadModel:
     torch.save(module.state_dict(), module.modelPath)
     print("remember to rename model file if wanted")
 
-trainer.printBenchmarks(testSet)
+trainer.printBenchmarks(trainingSet+testSet)
 trainer.storeBenchmarks("benchmarks" + module.modelPath[:-3] + ".txt")
 print("possible scenarios to store:")
 scenarios = [x[2] for x in (trainingSet+testSet)]

@@ -24,7 +24,7 @@ leak_time_profile = ["abrupt", "incipient"]
 sim_step_minutes = 15
 
 # Set duration
-num_days = 30
+num_days = 120
 durationHours = 24*num_days
 timeStamp = pandas.date_range("2017-01-01 00:00", periods=durationHours*(60/sim_step_minutes), freq=str(sim_step_minutes)+"min")
 
@@ -34,8 +34,8 @@ timeStamp = pandas.date_range("2017-01-01 00:00", periods=durationHours*(60/sim_
 
 labelScenarios = []
 uncertainty_Topology = 'NO'
-INP = "Hanoi_CMH"
-# INP = "Net1"
+# INP = "Hanoi_CMH"
+INP = "Net1"
 
 
 # RUN SCENARIOS
@@ -311,17 +311,19 @@ def runScenarios(scNum):
             fleaks2.write("{} , {}\n".format('Leak Start', str(leakStarts[leak_i])))
             fleaks2.write("{} , {}\n".format('Leak End', str(leakEnds[leak_i])))
             fleaks2.write("{} , {}\n".format('Peak Time', str(leak_peak_time[leak_i])))
-            fleaks2.close()
             
             # Leaks CSV
             # leaks = results.node['leak_demand',:,str(leak_node[leak_i])][0:-1]
             leaks = results.node['leak_demand'][str(leak_node[leak_i])][0:-1]
-            leaks = [ round(elem, 3) *3600  for elem in leaks ]    
+            df = pandas.DataFrame(leaks)
+            leaks = [ round(elem, 3) *1000  for elem in leaks ]    
             fleaks = pandas.DataFrame(leaks)
             fleaks['Timestamp'] = timeStamp
             fleaks = fleaks.set_index(['Timestamp'])
             fleaks.columns.values[0]='Description'
             fleaks.to_csv(leaks_Folder+'/Leak_'+str(leak_node[leak_i])+'_demand.csv')
+            fleaks2.write("{} , {}\n".format('Leak Size', fleaks.max()))
+            fleaks2.close()
             del fleaks
         
         # Labels scenarios
@@ -349,7 +351,7 @@ def runScenarios(scNum):
             
             # dem = results.node['demand',:,wn.node_name_list[j]][0:-1]
             dem = results.node['demand'][wn.node_name_list[j]][0:-1]
-            dem = [ round(elem, 3) * 3600 for elem in dem ] 
+            dem = [ round(elem, 3) * 1000 for elem in dem ] 
             fdem = pandas.DataFrame(dem)
             fdem['Timestamp'] = timeStamp
             fdem = fdem.set_index(['Timestamp'])
@@ -360,7 +362,7 @@ def runScenarios(scNum):
         for j in range(0, wn.num_links):
             flows = results.link['flowrate'][wn.link_name_list[j]][0:-1]
             flows = results.link['flowrate'][wn.link_name_list[j]][0:-1]
-            flows = [ round(elem, 3) * 3600 for elem in flows ]
+            flows = [ round(elem, 3) * 1000 for elem in flows ]
             fflows = pandas.DataFrame(flows)
             fflows['Timestamp'] = timeStamp
             fflows = fflows.set_index(['Timestamp'])
@@ -396,7 +398,7 @@ if __name__ == '__main__':
 
     t = time.time()
     
-    NumScenarios = 200
+    NumScenarios = 3
     scArray = range(1, NumScenarios+1)
     
     numCores = multiprocessing.cpu_count()

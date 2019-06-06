@@ -8,11 +8,12 @@ import tools
 
 torch.manual_seed(1)
 
-kernelSize = 5
-hiddenSize = 10
-# since the GRU gets inp from two CNNs
-inpSize = tools.getNumSensors("t") - (kernelSize-1)*2
-bidirectional = True
+presSens = tools.getNumSensors("p")
+kernelSize = 24  # hours
+
+gruInp = tools.getNumSensors("p") - (kernelSize-1)
+hiddenSize = 20
+bidirectional = False
 numLayers = 2
 dropout = 0.1
 
@@ -28,17 +29,12 @@ class CNNGRU(nn.Module):
 
     def __init__(self):
         super(CNNGRU, self).__init__()
+        self.name = input("Name the model:")
         self.hidden = self.init_hidden()
         self.output = outputFunction
         self.presCNN = nn.Sequential(
             nn.Conv1d(
-                in_channels=1, out_channels=1,
-                kernel_size=kernelSize),
-            nn.ReLU()
-        )
-        self.flowCNN = nn.Sequential(
-            nn.Conv1d(
-                in_channels=1, out_channels=1,
+                in_channels=presSens, out_channels=gruInp,
                 kernel_size=kernelSize),
             nn.ReLU()
         )
@@ -72,3 +68,19 @@ class CNNGRU(nn.Module):
         output = self.decoder(output)
         output = self.output(output)
         return output, self.hidden
+
+    def classify(self, inp):
+        output = self(inp)
+
+        if str(self.lossFunction.__class__()) == "BCELoss()":
+            classification = output.ge(0.5)
+        elif str(self.lossFunction.__class__()) == "MSELoss()":
+            classification = output.ge(0.5)
+        elif str(self.lossFunction.__class__()) == "L1Loss()":
+            classification = output.ge(0.5)
+        elif str(self.lossFunction.__class__()) == "CrossEntropyLoss()":
+            classification = output.max(2)[1]
+        else:
+            raise Exception("No classification for " + str(self.lossFunction.__class__()))
+
+        return output, classification
